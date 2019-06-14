@@ -1,0 +1,26 @@
+program P
+	int c[];
+	int x, y;
+	enum Broj {
+		NULA,
+		JEDAN,
+		PET = 5,
+		DESET = 10
+	}
+{
+	int sum(int x, int y) {
+		return x + y;
+	}
+
+	void main()
+	{
+		x = 1;
+		y = sum(1, sum(1, 1));
+		c = new int[Broj.PET];
+		c[x] = y;
+		c[x]--;
+		x++;
+		print(x);
+		print(c[Broj.JEDAN]);
+	}
+}
