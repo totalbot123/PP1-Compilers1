@@ -90,7 +90,6 @@ public class CodeGenerator extends VisitorAdaptor {
 		returnFromFunction();
 	}
 	
-	
 	@Override
 	public void visit(AssignopExpr assignopExpr) {
 		Code.store(lValue);
@@ -99,16 +98,20 @@ public class CodeGenerator extends VisitorAdaptor {
 	public void visit(ReadStmt readStmt) {
 		Obj desigObj = readStmt.getDesignator().obj;
 		if (desigObj.getType().compatibleWith(charType)) {
-			if (printUsed) {
-				Code.put(Code.bread);
-				Code.put(Code.pop);
-			}
+			popEnterChar();
 			Code.put(Code.bread);
 		} else {
 			Code.put(Code.read);
 		}
 		Code.store(desigObj);
 		printUsed = true;
+	}
+
+	private void popEnterChar() {
+		if (printUsed) {
+			Code.put(Code.bread);
+			Code.put(Code.pop);
+		}
 	}
 
 	@Override
@@ -200,7 +203,6 @@ public class CodeGenerator extends VisitorAdaptor {
 		if (!isMethod(desigObj)) {
 			Code.load(desigObj);
 		}
-			
 	}
 	
 	public void visit(Argumentss argumentss) {
