@@ -112,7 +112,7 @@ nonterminal ConstDecl, ConstList;
 nonterminal DeclList, SingleDecl;
 nonterminal ClassDecl, Extends, ClassMethodList;
 nonterminal Brackets;
-nonterminal Minus, MulopFactor, TermList;
+nonterminal Minus, MulopFactor, AddopTerm;
 nonterminal ExprDecl, ArraySpecifier, NewObject, Arguments;
 nonterminal NumConstList, ForLoop, ElseBranch;
 nonterminal RelopExpr, CondFact, CondFactList, CondTerm, CondTermList;
@@ -126,6 +126,7 @@ nonterminal Relop, Mulop, Assignop;
 nonterminal EnumDecl, EnumList, Implements, TypeList;
 nonterminal InterfaceDecl, InterfaceMethodDeclList, InterfaceMethodDecl;
 nonterminal VarList; 
+nonterminal ForKeyWord; 
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, ConstType, BoolConst, EnumName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj LValueDesignator, Designator, DesignatorName, DesignatorAccessList;
@@ -330,6 +331,11 @@ OptionalDesignatorStatement ::= (OptDesignatorStatement) DesignatorStatement
 IfElseCondition ::= (IfBranch) IF LPAREN Condition RPAREN Statement ElseBranch
 ;
 
+ElseBranch ::= (GoElseBranch) ELSE Statement
+		       |
+		       (NoGoElseBranch) /* epsilon */
+		       ;
+
 Condition ::= CondTerm CondTermList
 ;
 
@@ -359,12 +365,10 @@ RelopExpr ::= (RelopExprs) Relop Expr
 			  (NoRelopExprs) /* epsilon */
 			  ;
 			  
-ElseBranch ::= (GoElseBranch) ELSE Statement
-		       |
-		       (NoGoElseBranch) /* epsilon */
-		       ;
-			  
-ForLoop ::= FOR LPAREN OptionalDesignatorStatement SEMI OptionalCondition SEMI OptionalDesignatorStatement RPAREN
+ForLoop ::= ForKeyWord LPAREN OptionalDesignatorStatement SEMI OptionalCondition SEMI OptionalDesignatorStatement RPAREN Statement
+;
+
+ForKeyWord ::= FOR
 ;
 
 NumConstList ::= (NumConstsList) NumConstList COMMA NUMBER
@@ -377,7 +381,7 @@ OptionalExpr ::= (Expression) Expr
 			   	 (NoExpression) /* epsilon */
 			   	 ;
 
-Expr ::= (Expr) Minus FirstTerm:first TermList
+Expr ::= (Expr) Minus FirstTerm:first AddopTerm
 ;
 
 FirstTerm ::= (FirstTerm) Term:t
@@ -388,9 +392,9 @@ Minus ::= (MinusSign) MINUS
 		  (NoMinusSign) /* epsilon */
 		  ;
 			  
-TermList ::= (AddExpr) TermList Addop Term:t
+AddopTerm ::= (AddTerm) AddopTerm Addop Term:t
 		     |
-		     (NoAddExpr) /* epsilon */
+		     (NoAddTerm) /* epsilon */
 		     ;
 
 Term ::= (Term) FirstFactor:f MulopFactor
