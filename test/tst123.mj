@@ -1,6 +1,7 @@
 program P
 	int c[];
 	int x, y;
+	char z;
 	enum Broj {
 		NULA,
 		JEDAN,
@@ -8,19 +9,11 @@ program P
 		DESET = 10
 	}
 {
-	int sum(int x, int y) {
-		return x + y;
-	}
-
+	
 	void main()
 	{
-		x = 1;
-		y = sum(1, sum(1, 1));
-		c = new int[Broj.PET];
-		c[x] = y;
-		c[x]--;
-		x++;
-		print(x);
-		print(c[Broj.JEDAN]);
+		c = new int[5];
+		c[2 - 1] = 5*3*1 + 5/5*1;
+		print( c[2 - 1]);
 	}
 }
