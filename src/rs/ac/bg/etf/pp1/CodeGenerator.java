@@ -45,6 +45,7 @@ import rs.ac.bg.etf.pp1.ast.PrintStmt;
 import rs.ac.bg.etf.pp1.ast.ReadStmt;
 import rs.ac.bg.etf.pp1.ast.Relop;
 import rs.ac.bg.etf.pp1.ast.RelopExprs;
+import rs.ac.bg.etf.pp1.ast.ReturnStmt;
 import rs.ac.bg.etf.pp1.ast.Slash;
 import rs.ac.bg.etf.pp1.ast.SyntaxNode;
 import rs.ac.bg.etf.pp1.ast.VisitorAdaptor;
@@ -190,6 +191,11 @@ public class CodeGenerator extends VisitorAdaptor {
 		while (!currentFixupAddrStack.empty()) {
 			Code.fixup(currentFixupAddrStack.pop());
 		}
+	}
+	
+	@Override
+	public void visit(ReturnStmt ReturnStmt) {
+		returnFromFunction();
 	}
 	
 	@Override
