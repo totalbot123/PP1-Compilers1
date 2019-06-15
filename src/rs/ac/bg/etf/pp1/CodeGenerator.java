@@ -3,28 +3,48 @@ package rs.ac.bg.etf.pp1;
 import static rs.ac.bg.etf.pp1.SemanticPass.*;
 import static rs.etf.pp1.symboltable.Tab.*;
 
+import java.util.Stack;
+
 import rs.ac.bg.etf.pp1.ast.AddTerm;
 import rs.ac.bg.etf.pp1.ast.Argumentss;
 import rs.ac.bg.etf.pp1.ast.AssignopExpr;
 import rs.ac.bg.etf.pp1.ast.Asterisk;
+import rs.ac.bg.etf.pp1.ast.CondFact;
+import rs.ac.bg.etf.pp1.ast.CondOR;
+import rs.ac.bg.etf.pp1.ast.CondTerm;
 import rs.ac.bg.etf.pp1.ast.DecOp;
 import rs.ac.bg.etf.pp1.ast.Designator;
 import rs.ac.bg.etf.pp1.ast.DesignatorName;
 import rs.ac.bg.etf.pp1.ast.DesignatorStatement;
+import rs.ac.bg.etf.pp1.ast.ElseBranch;
+import rs.ac.bg.etf.pp1.ast.ElseCodeBlock;
+import rs.ac.bg.etf.pp1.ast.ElseKeyWord;
+import rs.ac.bg.etf.pp1.ast.Equal;
 import rs.ac.bg.etf.pp1.ast.Expr;
 import rs.ac.bg.etf.pp1.ast.FactCharConst;
 import rs.ac.bg.etf.pp1.ast.FactDesignatorAccesor;
 import rs.ac.bg.etf.pp1.ast.FactNewObject;
 import rs.ac.bg.etf.pp1.ast.FactNumConst;
+import rs.ac.bg.etf.pp1.ast.GoElseBranch;
+import rs.ac.bg.etf.pp1.ast.Greater;
+import rs.ac.bg.etf.pp1.ast.GreaterEqual;
+import rs.ac.bg.etf.pp1.ast.IfKeyWord;
 import rs.ac.bg.etf.pp1.ast.IncOp;
 import rs.ac.bg.etf.pp1.ast.LValueDesignator;
+import rs.ac.bg.etf.pp1.ast.Less;
+import rs.ac.bg.etf.pp1.ast.LessEqual;
 import rs.ac.bg.etf.pp1.ast.MethodDecl;
 import rs.ac.bg.etf.pp1.ast.MethodName;
 import rs.ac.bg.etf.pp1.ast.MinusSign;
 import rs.ac.bg.etf.pp1.ast.MulopFactors;
+import rs.ac.bg.etf.pp1.ast.NoElseBranch;
+import rs.ac.bg.etf.pp1.ast.NoRelopExprs;
+import rs.ac.bg.etf.pp1.ast.NotEqual;
 import rs.ac.bg.etf.pp1.ast.PlusAddop;
 import rs.ac.bg.etf.pp1.ast.PrintStmt;
 import rs.ac.bg.etf.pp1.ast.ReadStmt;
+import rs.ac.bg.etf.pp1.ast.Relop;
+import rs.ac.bg.etf.pp1.ast.RelopExprs;
 import rs.ac.bg.etf.pp1.ast.Slash;
 import rs.ac.bg.etf.pp1.ast.SyntaxNode;
 import rs.ac.bg.etf.pp1.ast.VisitorAdaptor;
@@ -35,6 +55,9 @@ import rs.etf.pp1.symboltable.concepts.Struct;
 public class CodeGenerator extends VisitorAdaptor {
 	
 	private Obj incDec = new Obj(Obj.Con, "KonstantaJedan", intType);
+	private Stack<Stack<Integer> > stackOfFixupAddrStacks = new Stack<Stack<Integer>>();
+	private Stack<Integer> currentFixupAddrStack = null;
+	private int currentOp;
 	
 	public CodeGenerator() {
 		incDec.setAdr(1);
@@ -88,6 +111,85 @@ public class CodeGenerator extends VisitorAdaptor {
 	@Override
 	public void visit(AssignopExpr assignopExpr) {
 		Code.store(lValue);
+	}
+	
+	public void visit(IfKeyWord ifKeyWord) {
+		createFixupAddrStack();
+	}
+
+	@Override
+	public void visit(CondOR condOR) {
+		fixupPreviousCode();
+	}
+	
+	@Override
+	public void visit(CondFact condFact) {
+		if (condFact.getRelopExpr() instanceof NoRelopExprs) {
+			currentOp = Code.ne;
+			Code.put(Code.const_n + 0);
+		}
+		Code.putFalseJump(currentOp, 0);
+		addFixupAddrToStack();
+	}
+	
+	public void visit(RelopExprs relopExprs) {
+		Relop relop = relopExprs.getRelop();
+		if (relop instanceof Equal) {
+			currentOp = Code.eq;
+		} else if (relop instanceof NotEqual) {
+			currentOp = Code.ne;
+		} else if (relop instanceof Greater) {
+			currentOp = Code.gt;
+		} else if (relop instanceof GreaterEqual) {
+			currentOp = Code.ge;
+		} else if (relop instanceof Less) {
+			currentOp = Code.lt;
+		} else if (relop instanceof LessEqual) {
+			currentOp = Code.le;
+		} 
+	}
+	
+	public void visit(ElseKeyWord goElseBranch) {
+		Code.putJump(0);
+		fixupCodeAndCloseScopeStack();
+		openScopeStackAndAddFixupCode(); 
+	}
+	
+	public void visit(ElseCodeBlock elseCodeBlock) {
+		fixupCodeAndCloseScopeStack();
+	}
+	
+	public void visit(NoElseBranch noElseBranch) {
+		fixupCodeAndCloseScopeStack();
+	}
+	
+	private void openScopeStackAndAddFixupCode() {
+		createFixupAddrStack();
+		addFixupAddrToStack();
+	}
+
+	private void fixupCodeAndCloseScopeStack() {
+		fixupPreviousCode();
+		removeCurrentFixupAddrStack();
+	}
+	
+	private void removeCurrentFixupAddrStack() {
+		stackOfFixupAddrStacks.pop();
+	}
+	
+	private void createFixupAddrStack() {
+		currentFixupAddrStack = new Stack<Integer>();
+		stackOfFixupAddrStacks.push(currentFixupAddrStack);
+	}
+	
+	private void addFixupAddrToStack() {
+		currentFixupAddrStack.push(Code.pc - 2);
+	}
+
+	private void fixupPreviousCode() {
+		while (!currentFixupAddrStack.empty()) {
+			Code.fixup(currentFixupAddrStack.pop());
+		}
 	}
 	
 	@Override

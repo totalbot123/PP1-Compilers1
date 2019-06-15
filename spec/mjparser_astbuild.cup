@@ -162,7 +162,11 @@ nonterminal InterfaceDecl InterfaceDecl;
 nonterminal InterfaceMethodDeclList InterfaceMethodDeclList;
 nonterminal InterfaceMethodDecl InterfaceMethodDecl;
 nonterminal VarList VarList; 
-nonterminal ForKeyWord ForKeyWord; 
+nonterminal ForKeyWord ForKeyWord;
+nonterminal CondOR CondOR;
+nonterminal IfKeyWord IfKeyWord;
+nonterminal ElseKeyWord ElseKeyWord;
+nonterminal ElseCodeBlock ElseCodeBlock; 
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, ConstType, BoolConst, EnumName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj LValueDesignator, Designator, DesignatorName, DesignatorAccessList;
@@ -364,13 +368,22 @@ OptionalDesignatorStatement ::= (OptDesignatorStatement) DesignatorStatement:D1 
 								(NoOptDesignatorStatement) {: RESULT=new NoOptDesignatorStatement(); :} /* epsilon */
 								;
 
-IfElseCondition ::= (IfBranch) IF LPAREN Condition:C1 RPAREN Statement:S2 ElseBranch:E3 {: RESULT=new IfBranch(C1, S2, E3); RESULT.setLine(C1left); :}
+IfElseCondition ::= (IfBranch) IfKeyWord:I1 LPAREN Condition:C2 RPAREN Statement:S3 ElseBranch:E4 {: RESULT=new IfBranch(I1, C2, S3, E4); RESULT.setLine(I1left); :}
 ;
 
-ElseBranch ::= (GoElseBranch) ELSE Statement:S1 {: RESULT=new GoElseBranch(S1); RESULT.setLine(S1left); :}
+IfKeyWord ::= (IfKeyWord) IF {: RESULT=new IfKeyWord(); :}
+;
+
+ElseBranch ::= (GoElseBranch) ElseKeyWord:E1 ElseCodeBlock:E2 {: RESULT=new GoElseBranch(E1, E2); RESULT.setLine(E1left); :}
 		       |
-		       (NoGoElseBranch) {: RESULT=new NoGoElseBranch(); :} /* epsilon */
+		       (NoElseBranch) {: RESULT=new NoElseBranch(); :} /* epsilon */
 		       ;
+		       
+ElseKeyWord ::= (ElseKeyWord) ELSE {: RESULT=new ElseKeyWord(); :}
+;
+
+ElseCodeBlock ::= (ElseCodeBlock) Statement:S1 {: RESULT=new ElseCodeBlock(S1); RESULT.setLine(S1left); :}
+;
 
 Condition ::= CondTerm:C1 CondTermList:C2 {: RESULT=new ConditionDerived1(C1, C2); RESULT.setLine(C1left); :}
 ;
@@ -380,21 +393,24 @@ OptionalCondition ::= (OptCond) Condition:C1 {: RESULT=new OptCond(C1); RESULT.s
 					  (NoOptCond) {: RESULT=new NoOptCond(); :} /* epsilon */
 					  ;
 
-CondTermList ::= (CondTermsList) CondTermList:C1 OR CondTerm:C2 {: RESULT=new CondTermsList(C1, C2); RESULT.setLine(C1left); :}
+CondTermList ::= (CondTermsList) CondTermList:C1 CondOR:C2 CondTerm:C3 {: RESULT=new CondTermsList(C1, C2, C3); RESULT.setLine(C1left); :}
 				 |
 				 (NoCondTermsList) {: RESULT=new NoCondTermsList(); :} /* epsilon */
 				 ;
+
+CondOR ::= (CondOR) OR {: RESULT=new CondOR(); :}
+;
 				 
-CondTerm ::= CondFact:C1 CondFactList:C2 {: RESULT=new CondTermDerived1(C1, C2); RESULT.setLine(C1left); :}
+CondTerm ::= (CondTerm) CondFact:C1 CondFactList:C2 {: RESULT=new CondTerm(C1, C2); RESULT.setLine(C1left); :}
+;
+
+CondFact ::= (CondFact) Expr:E1 RelopExpr:R2 {: RESULT=new CondFact(E1, R2); RESULT.setLine(E1left); :}
 ;
 
 CondFactList ::= (CondFactsList) CondFactList:C1 AND CondFact:C2 {: RESULT=new CondFactsList(C1, C2); RESULT.setLine(C1left); :}
 				 |
 				 (NoCondFactsList) {: RESULT=new NoCondFactsList(); :} /* epsilon */
 				 ;
-
-CondFact ::= Expr:E1 RelopExpr:R2 {: RESULT=new CondFactDerived1(E1, R2); RESULT.setLine(E1left); :}
-;
 
 RelopExpr ::= (RelopExprs) Relop:R1 Expr:E2 {: RESULT=new RelopExprs(R1, E2); RESULT.setLine(R1left); :}
 			  |

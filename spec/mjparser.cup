@@ -126,7 +126,7 @@ nonterminal Relop, Mulop, Assignop;
 nonterminal EnumDecl, EnumList, Implements, TypeList;
 nonterminal InterfaceDecl, InterfaceMethodDeclList, InterfaceMethodDecl;
 nonterminal VarList; 
-nonterminal ForKeyWord; 
+nonterminal ForKeyWord, CondOR, IfKeyWord, ElseKeyWord, ElseCodeBlock; 
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, ConstType, BoolConst, EnumName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj LValueDesignator, Designator, DesignatorName, DesignatorAccessList;
@@ -328,13 +328,22 @@ OptionalDesignatorStatement ::= (OptDesignatorStatement) DesignatorStatement
 								(NoOptDesignatorStatement) /* epsilon */
 								;
 
-IfElseCondition ::= (IfBranch) IF LPAREN Condition RPAREN Statement ElseBranch
+IfElseCondition ::= (IfBranch) IfKeyWord LPAREN Condition RPAREN Statement ElseBranch
 ;
 
-ElseBranch ::= (GoElseBranch) ELSE Statement
+IfKeyWord ::= (IfKeyWord) IF
+;
+
+ElseBranch ::= (GoElseBranch) ElseKeyWord ElseCodeBlock
 		       |
-		       (NoGoElseBranch) /* epsilon */
+		       (NoElseBranch) /* epsilon */
 		       ;
+		       
+ElseKeyWord ::= (ElseKeyWord) ELSE
+;
+
+ElseCodeBlock ::= (ElseCodeBlock) Statement
+;
 
 Condition ::= CondTerm CondTermList
 ;
@@ -344,21 +353,24 @@ OptionalCondition ::= (OptCond) Condition
 					  (NoOptCond) /* epsilon */
 					  ;
 
-CondTermList ::= (CondTermsList) CondTermList OR CondTerm
+CondTermList ::= (CondTermsList) CondTermList CondOR CondTerm
 				 |
 				 (NoCondTermsList) /* epsilon */
 				 ;
+
+CondOR ::= (CondOR) OR
+;
 				 
-CondTerm ::= CondFact CondFactList
+CondTerm ::= (CondTerm) CondFact CondFactList
+;
+
+CondFact ::= (CondFact) Expr RelopExpr
 ;
 
 CondFactList ::= (CondFactsList) CondFactList AND CondFact
 				 |
 				 (NoCondFactsList) /* epsilon */
 				 ;
-
-CondFact ::= Expr RelopExpr
-;
 
 RelopExpr ::= (RelopExprs) Relop Expr
 			  |
