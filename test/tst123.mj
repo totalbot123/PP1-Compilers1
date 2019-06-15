@@ -12,7 +12,8 @@ program P
 	
 	void main()
 	{
-		x = 5*3*1 + 5/5*1;
-		print(z);
+		c = new int[5];
+		c[2 - 1] = 5*3*1 + 5/5*1;
+		print( c[2 - 1]);
 	}
 }
