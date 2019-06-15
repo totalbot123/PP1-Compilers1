@@ -1,0 +1,18 @@
+program P
+	int c[];
+	int x, y;
+	char z;
+	enum Broj {
+		NULA,
+		JEDAN,
+		PET = 5,
+		DESET = 10
+	}
+{
+	
+	void main()
+	{
+		z = 'c'*'b'*'a' + 'a'/'a'*'b';
+		print(z);
+	}
+}

@@ -125,7 +125,7 @@ nonterminal ClassMethodList ClassMethodList;
 nonterminal Brackets Brackets;
 nonterminal Minus Minus;
 nonterminal MulopFactor MulopFactor;
-nonterminal TermList TermList;
+nonterminal AddopTerm AddopTerm;
 nonterminal ExprDecl ExprDecl;
 nonterminal ArraySpecifier ArraySpecifier;
 nonterminal NewObject NewObject;
@@ -413,7 +413,7 @@ OptionalExpr ::= (Expression) Expr:E1 {: RESULT=new Expression(E1); RESULT.setLi
 			   	 (NoExpression) {: RESULT=new NoExpression(); :} /* epsilon */
 			   	 ;
 
-Expr ::= (Expr) Minus:M1 FirstTerm:first TermList:T2 {: RESULT=new Expr(M1, first, T2); RESULT.setLine(M1left); :}
+Expr ::= (Expr) Minus:M1 FirstTerm:first AddopTerm:A2 {: RESULT=new Expr(M1, first, A2); RESULT.setLine(M1left); :}
 ;
 
 FirstTerm ::= (FirstTerm) Term:t {: RESULT=new FirstTerm(t); RESULT.setLine(tleft); :}
@@ -424,9 +424,9 @@ Minus ::= (MinusSign) MINUS {: RESULT=new MinusSign(); :}
 		  (NoMinusSign) {: RESULT=new NoMinusSign(); :} /* epsilon */
 		  ;
 			  
-TermList ::= (AddExpr) TermList:T1 Addop:A2 Term:t {: RESULT=new AddExpr(T1, A2, t); RESULT.setLine(T1left); :}
+AddopTerm ::= (AddTerm) AddopTerm:A1 Addop:A2 Term:t {: RESULT=new AddTerm(A1, A2, t); RESULT.setLine(A1left); :}
 		     |
-		     (NoAddExpr) {: RESULT=new NoAddExpr(); :} /* epsilon */
+		     (NoAddTerm) {: RESULT=new NoAddTerm(); :} /* epsilon */
 		     ;
 
 Term ::= (Term) FirstFactor:f MulopFactor:M1 {: RESULT=new Term(f, M1); RESULT.setLine(fleft); :}

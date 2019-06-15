@@ -6,6 +6,7 @@ import static rs.etf.pp1.symboltable.Tab.*;
 import org.apache.log4j.Logger;
 
 import rs.ac.bg.etf.pp1.ast.AddExpr;
+import rs.ac.bg.etf.pp1.ast.AddTerm;
 import rs.ac.bg.etf.pp1.ast.Argumentss;
 import rs.ac.bg.etf.pp1.ast.AssignopExpr;
 import rs.ac.bg.etf.pp1.ast.Asterisk;
@@ -176,8 +177,8 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 
 	@Override
-	public void visit(AddExpr addExpr) {
-		boolean addition = addExpr.getAddop() instanceof PlusAddop;
+	public void visit(AddTerm addTerm) {
+		boolean addition = addTerm.getAddop() instanceof PlusAddop;
 		if (addition) {
 			Code.put(Code.add);
 		} else {

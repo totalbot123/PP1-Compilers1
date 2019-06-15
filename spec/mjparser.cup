@@ -112,7 +112,7 @@ nonterminal ConstDecl, ConstList;
 nonterminal DeclList, SingleDecl;
 nonterminal ClassDecl, Extends, ClassMethodList;
 nonterminal Brackets;
-nonterminal Minus, MulopFactor, TermList;
+nonterminal Minus, MulopFactor, AddopTerm;
 nonterminal ExprDecl, ArraySpecifier, NewObject, Arguments;
 nonterminal NumConstList, ForLoop, ElseBranch;
 nonterminal RelopExpr, CondFact, CondFactList, CondTerm, CondTermList;
@@ -377,7 +377,7 @@ OptionalExpr ::= (Expression) Expr
 			   	 (NoExpression) /* epsilon */
 			   	 ;
 
-Expr ::= (Expr) Minus FirstTerm:first TermList
+Expr ::= (Expr) Minus FirstTerm:first AddopTerm
 ;
 
 FirstTerm ::= (FirstTerm) Term:t
@@ -388,9 +388,9 @@ Minus ::= (MinusSign) MINUS
 		  (NoMinusSign) /* epsilon */
 		  ;
 			  
-TermList ::= (AddExpr) TermList Addop Term:t
+AddopTerm ::= (AddTerm) AddopTerm Addop Term:t
 		     |
-		     (NoAddExpr) /* epsilon */
+		     (NoAddTerm) /* epsilon */
 		     ;
 
 Term ::= (Term) FirstFactor:f MulopFactor

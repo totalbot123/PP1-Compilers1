@@ -19,6 +19,8 @@ import rs.ac.bg.etf.pp1.ast.ActualParam;
 import rs.ac.bg.etf.pp1.ast.ActualParams;
 import rs.ac.bg.etf.pp1.ast.Actuals;
 import rs.ac.bg.etf.pp1.ast.AddExpr;
+import rs.ac.bg.etf.pp1.ast.AddTerm;
+import rs.ac.bg.etf.pp1.ast.AddopTerm;
 import rs.ac.bg.etf.pp1.ast.Argumentss;
 import rs.ac.bg.etf.pp1.ast.ArraySpecifiers;
 import rs.ac.bg.etf.pp1.ast.AssignEnumValues;
@@ -93,6 +95,9 @@ public class SemanticPass extends VisitorAdaptor {
 	protected static Obj lValue = noObj;
 	
 	protected static Stack<Struct> argumentsTypes = new Stack<Struct>();
+	
+	protected static Struct previousFactor = noType;
+	protected static Struct previousTerm = noType;
 
 	static Logger log = Logger.getLogger(SemanticPass.class);
 	
@@ -371,7 +376,7 @@ public class SemanticPass extends VisitorAdaptor {
 
 	@Override
 	public void visit(Expr expr) {
-		if (expr.getTermList() instanceof AddExpr) {
+		if (expr.getAddopTerm() instanceof AddopTerm) {
 			Struct firstTermStruct = expr.getFirstTerm().struct;
 			if (!firstTermStruct.compatibleWith(intType)) {
 				report_error("Sabiranje se moze vrsiti samo sa integer-ima!", expr.getFirstTerm());
@@ -391,14 +396,19 @@ public class SemanticPass extends VisitorAdaptor {
 		}
 
 		firstTerm.struct = termNode;
+		previousTerm = firstTerm.struct;
 	}
 
 	@Override
-	public void visit(AddExpr addExpr) {
-		Struct termNode = addExpr.getTerm().struct;
-		if (termNode.getKind() != Struct.Int && termNode.getKind() != Struct.Enum) {
-			report_error("Sabiranje se moze vrsiti samo sa integer-ima!", addExpr.getTerm());
+	public void visit(AddTerm addTerm) {
+		Struct termNode = addTerm.getTerm().struct;
+//		if (termNode.getKind() != Struct.Int && termNode.getKind() != Struct.Enum) {
+//			report_error("Sabiranje se moze vrsiti samo sa integer-ima!", addTerm.getTerm());
+//		}
+		if (!assignableTo(previousTerm, termNode)) {
+			report_error("Operandi moraju biti istog tipa za operaciju sabiranja/oduzimanja", addTerm);
 		}
+		previousTerm = termNode;
 	}
 	
 	@Override
@@ -410,20 +420,24 @@ public class SemanticPass extends VisitorAdaptor {
 			}
 		} 
 		term.struct = term.getFirstFactor().struct;
-		
 	}
 	
 	@Override
 	public void visit(FirstFactor firstFactor) {
 		firstFactor.struct = firstFactor.getFactor().struct;
+		previousFactor = firstFactor.struct;
 	}
 	
 	@Override
 	public void visit(MulopFactors mulopFactor) {
 		Struct mulopFactNode = mulopFactor.getFactor().struct;
-		if (!assignableTo(intType, mulopFactNode)) {
-			report_error("Mnozenje se moze vrsiti samo sa integer-ima", mulopFactor);
+//		if (!assignableTo(intType, mulopFactNode)) {
+//			report_error("Mnozenje se moze vrsiti samo sa integer-ima", mulopFactor);
+//		}
+		if (!assignableTo(previousFactor, mulopFactNode)) {
+			report_error("Operandi moraju biti istog tipa za operaciju mnozenja/deljenja/mod-a", mulopFactor);
 		}
+		previousFactor = mulopFactNode;
 	}
 	
 	@Override
