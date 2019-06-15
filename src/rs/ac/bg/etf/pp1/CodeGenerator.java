@@ -3,9 +3,6 @@ package rs.ac.bg.etf.pp1;
 import static rs.ac.bg.etf.pp1.SemanticPass.*;
 import static rs.etf.pp1.symboltable.Tab.*;
 
-import org.apache.log4j.Logger;
-
-import rs.ac.bg.etf.pp1.ast.AddExpr;
 import rs.ac.bg.etf.pp1.ast.AddTerm;
 import rs.ac.bg.etf.pp1.ast.Argumentss;
 import rs.ac.bg.etf.pp1.ast.AssignopExpr;
@@ -72,9 +69,6 @@ public class CodeGenerator extends VisitorAdaptor {
 		Code.put(Code.return_);
 	}
 	
-	Logger log = Logger.getLogger(getClass());
-	private boolean printUsed = false;
-	
 	@Override
 	public void visit(MethodName methodName) {
 		Obj currentMethod = methodName.obj;
@@ -96,23 +90,17 @@ public class CodeGenerator extends VisitorAdaptor {
 		Code.store(lValue);
 	}
 	
+	@Override
 	public void visit(ReadStmt readStmt) {
 		Obj desigObj = readStmt.getDesignator().obj;
 		if (desigObj.getType().compatibleWith(charType)) {
-			popEnterChar();
 			Code.put(Code.bread);
 		} else {
 			Code.put(Code.read);
 		}
+		Code.put(Code.bread);
+		Code.put(Code.pop);
 		Code.store(desigObj);
-		printUsed = true;
-	}
-
-	private void popEnterChar() {
-		if (printUsed) {
-			Code.put(Code.bread);
-			Code.put(Code.pop);
-		}
 	}
 
 	@Override
@@ -121,11 +109,9 @@ public class CodeGenerator extends VisitorAdaptor {
 		if (assignableTo(charType, exprStruct)) {
 			Code.loadConst(1);
 			Code.put(Code.bprint);
-		} else if (assignableTo(intType, exprStruct)) {
+		} else {
 			Code.loadConst(4);
 			Code.put(Code.print);
-		} else {
-			report_error("Printovanje se moze raditi samo sa char ili int tipom", printStmt);
 		}
 	}
 	
@@ -206,6 +192,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		}
 	}
 	
+	@Override
 	public void visit(Argumentss argumentss) {
 		Obj methodObj = ((FactDesignatorAccesor) argumentss.getParent()).getDesignator().obj;
 		int dest_adr = methodObj.getAdr() - Code.pc;
