@@ -12,7 +12,7 @@ program P
 	
 	void main()
 	{
-		z = 'c'*'b'*'a' + 'a'/'a'*'b';
+		x = 5*3*1 + 5/5*1;
 		print(z);
 	}
 }

@@ -376,7 +376,7 @@ public class SemanticPass extends VisitorAdaptor {
 
 	@Override
 	public void visit(Expr expr) {
-		if (expr.getAddopTerm() instanceof AddopTerm) {
+		if (expr.getAddopTerm() instanceof AddTerm) {
 			Struct firstTermStruct = expr.getFirstTerm().struct;
 			if (!firstTermStruct.compatibleWith(intType)) {
 				report_error("Sabiranje se moze vrsiti samo sa integer-ima!", expr.getFirstTerm());
