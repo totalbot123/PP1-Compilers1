@@ -169,7 +169,13 @@ nonterminal ForCodeBlock ForCodeBlock;
 nonterminal CondOR CondOR;
 nonterminal IfKeyWord IfKeyWord;
 nonterminal ElseKeyWord ElseKeyWord;
-nonterminal ElseCodeBlock ElseCodeBlock; 
+nonterminal ElseCodeBlock ElseCodeBlock;
+nonterminal OptionalInitialization OptionalInitialization;
+nonterminal InitPars InitPars;
+nonterminal InitStarted InitStarted;
+nonterminal InitParamList InitParamList;
+nonterminal InitExpr InitExpr;
+nonterminal NewArrayEnd NewArrayEnd;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, ConstType, EnumName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj LValueDesignator, Designator, DesignatorName, DesignatorAccessList;
@@ -514,10 +520,34 @@ Arguments ::= (Argumentss) LPAREN ActPars:A1 RPAREN {: RESULT=new Argumentss(A1)
 NewObject ::= (NewObject) NEW Type:t ArraySpecifier:A1 {: RESULT=new NewObject(t, A1); RESULT.setLine(tleft); :}
 ;
 
-ArraySpecifier ::= (ArraySpecifiers) LBRACKET Expr:E1 RBRACKET {: RESULT=new ArraySpecifiers(E1); RESULT.setLine(E1left); :}
+ArraySpecifier ::= (ArraySpecifiers) LBRACKET Expr:E1 NewArrayEnd:N2 OptionalInitialization:O3 {: RESULT=new ArraySpecifiers(E1, N2, O3); RESULT.setLine(E1left); :}
 				   |
 				   (NoArraySpecifiers) {: RESULT=new NoArraySpecifiers(); :} /* epsilon */
 				   ;
+				   
+NewArrayEnd ::= (NewArrayEnd) RBRACKET {: RESULT=new NewArrayEnd(); :}
+;
+			   
+OptionalInitialization ::= (OptInit) InitStarted:I1 InitPars:I2 RBRACE {: RESULT=new OptInit(I1, I2); RESULT.setLine(I1left); :}
+						   |
+						   (NoOptInit) {: RESULT=new NoOptInit(); :} /* epsilon */
+						   ;
+						   
+InitStarted ::= (InitStarted) LBRACE {: RESULT=new InitStarted(); :}
+;
+						   
+InitPars ::= (InitializationPars) InitParamList:I1 {: RESULT=new InitializationPars(I1); RESULT.setLine(I1left); :} 
+			 | 
+			 (NoInit) {: RESULT=new NoInit(); :} /* epsilon */ 
+			 ;
+			   
+InitParamList ::= (InitParamLists) InitParamList:I1 COMMA InitExpr:I2 {: RESULT=new InitParamLists(I1, I2); RESULT.setLine(I1left); :}
+				  |
+				  (InitParam) InitExpr:I1 {: RESULT=new InitParam(I1); RESULT.setLine(I1left); :}
+				  ;
+				  
+InitExpr ::= (InitExpr) Expr:E1 {: RESULT=new InitExpr(E1); RESULT.setLine(E1left); :}
+;
 
 ExprDecl ::= (ExprDecl) LPAREN Expr:e RPAREN {: RESULT=new ExprDecl(e); RESULT.setLine(eleft); :}
 ;

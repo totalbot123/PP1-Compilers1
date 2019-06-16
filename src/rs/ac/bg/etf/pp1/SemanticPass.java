@@ -38,7 +38,6 @@ import rs.ac.bg.etf.pp1.ast.FactExprDecl;
 import rs.ac.bg.etf.pp1.ast.FactDesignatorAccesor;
 import rs.ac.bg.etf.pp1.ast.FactNewObject;
 import rs.ac.bg.etf.pp1.ast.FactNumConst;
-import rs.ac.bg.etf.pp1.ast.FalseConst;
 import rs.ac.bg.etf.pp1.ast.FirstFactor;
 import rs.ac.bg.etf.pp1.ast.FirstTerm;
 import rs.ac.bg.etf.pp1.ast.ForKeyWord;
@@ -224,7 +223,6 @@ public class SemanticPass extends VisitorAdaptor {
 	@Override
 	public void visit(BooleanType booleanType) {
 		Obj boolValue = new Obj(Obj.Con, "", boolType);
-		//boolValue.setAdr(1);
 		if (booleanType.getBoolConst() instanceof TrueConst) {
 			boolValue.setAdr(1);
 		} else {
@@ -232,21 +230,6 @@ public class SemanticPass extends VisitorAdaptor {
 		}
 		booleanType.obj = boolValue;
 	}
-	
-//	@Override
-//	public void visit(TrueConst trueConst) {
-//		Obj trueValue = new Obj(Obj.Con, "", boolType);
-//		trueValue.setAdr(1);
-//		trueConst.obj = trueValue;
-//	}
-//	
-//	@Override
-//	public void visit(FalseConst falseConst) {
-//		Obj falseValue = new Obj(Obj.Con, "", boolType);
-//		falseValue.setAdr(0);
-//		falseConst.obj = falseValue;
-//	}
-	
 	
 	@Override
 	public void visit(SingleVar singleVar) {
@@ -377,18 +360,22 @@ public class SemanticPass extends VisitorAdaptor {
 		}
 	}
 	
+	@Override
 	public void visit(ForStmt forStmt) {
 		inFoorLoop = false;
 	}
 	
+	@Override
 	public void visit(ForKeyWord forKeyWord) {
 		inFoorLoop = true;
 	}
 	
+	@Override
 	public void visit(BreakStmt breakStmt) {
 		checkForLoop(breakStmt);
 	}
 	
+	@Override
 	public void visit(ContinueStmt continueStmt) {
 		checkForLoop(continueStmt);
 	}
@@ -542,7 +529,6 @@ public class SemanticPass extends VisitorAdaptor {
 	
 	@Override
 	public void visit(ArraySpecifiers arraySpecifier) {
-		//arraySpecifier.getExpr().struct != intType
 		if (!assignableTo(intType, arraySpecifier.getExpr().struct)) {
 			report_error("Izraz za specifiranje broja elemenata niza mora biti tipa Integer", arraySpecifier);
 		}

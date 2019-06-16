@@ -23,11 +23,15 @@ program P
 		int bodovi;
 		Broj nula, jedan;
 	{
-		niz = new int[2];
-		niz[1] = 1;
-		niz[0] = 0;
+		nizch = new char[3] {'a', 'b', 'c'};
+		//for (x = 0; x < len(niz); x++) {
+		//	niz[x] = 1;
+		//}
 		
-		print(len(niz));
-		//print(niz[1]);
+		print(2);
+		
+		for (x = 0; x < len(nizch); x++) {
+			print(nizch[x]);
+		}
 	}
 }

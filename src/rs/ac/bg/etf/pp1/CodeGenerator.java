@@ -3,7 +3,6 @@ package rs.ac.bg.etf.pp1;
 import static rs.ac.bg.etf.pp1.SemanticPass.*;
 import static rs.etf.pp1.symboltable.Tab.*;
 
-import java.util.Queue;
 import java.util.Stack;
 
 import rs.ac.bg.etf.pp1.ast.AddTerm;
@@ -15,8 +14,6 @@ import rs.ac.bg.etf.pp1.ast.BreakStmt;
 import rs.ac.bg.etf.pp1.ast.CondFact;
 import rs.ac.bg.etf.pp1.ast.CondOR;
 import rs.ac.bg.etf.pp1.ast.CondTerm;
-import rs.ac.bg.etf.pp1.ast.CondTermList;
-import rs.ac.bg.etf.pp1.ast.CondTermsList;
 import rs.ac.bg.etf.pp1.ast.Condition;
 import rs.ac.bg.etf.pp1.ast.ContinueStmt;
 import rs.ac.bg.etf.pp1.ast.DecOp;
@@ -30,12 +27,10 @@ import rs.ac.bg.etf.pp1.ast.Expr;
 import rs.ac.bg.etf.pp1.ast.FactBoolConst;
 import rs.ac.bg.etf.pp1.ast.FactCharConst;
 import rs.ac.bg.etf.pp1.ast.FactDesignatorAccesor;
-import rs.ac.bg.etf.pp1.ast.FactNewObject;
 import rs.ac.bg.etf.pp1.ast.FactNumConst;
 import rs.ac.bg.etf.pp1.ast.ForCodeBlock;
 import rs.ac.bg.etf.pp1.ast.ForConditionalStatement;
 import rs.ac.bg.etf.pp1.ast.ForFirstStatement;
-import rs.ac.bg.etf.pp1.ast.ForKeyWord;
 import rs.ac.bg.etf.pp1.ast.ForLoop;
 import rs.ac.bg.etf.pp1.ast.ForSecondStatement;
 import rs.ac.bg.etf.pp1.ast.FunctionExpr;
@@ -43,6 +38,8 @@ import rs.ac.bg.etf.pp1.ast.Greater;
 import rs.ac.bg.etf.pp1.ast.GreaterEqual;
 import rs.ac.bg.etf.pp1.ast.IfKeyWord;
 import rs.ac.bg.etf.pp1.ast.IncOp;
+import rs.ac.bg.etf.pp1.ast.InitExpr;
+import rs.ac.bg.etf.pp1.ast.InitStarted;
 import rs.ac.bg.etf.pp1.ast.LValueDesignator;
 import rs.ac.bg.etf.pp1.ast.Less;
 import rs.ac.bg.etf.pp1.ast.LessEqual;
@@ -50,9 +47,11 @@ import rs.ac.bg.etf.pp1.ast.MethodDecl;
 import rs.ac.bg.etf.pp1.ast.MethodName;
 import rs.ac.bg.etf.pp1.ast.MinusSign;
 import rs.ac.bg.etf.pp1.ast.MulopFactors;
+import rs.ac.bg.etf.pp1.ast.NewArrayEnd;
 import rs.ac.bg.etf.pp1.ast.NoElseBranch;
 import rs.ac.bg.etf.pp1.ast.NoRelopExprs;
 import rs.ac.bg.etf.pp1.ast.NotEqual;
+import rs.ac.bg.etf.pp1.ast.OptInit;
 import rs.ac.bg.etf.pp1.ast.PlusAddop;
 import rs.ac.bg.etf.pp1.ast.PrintStmt;
 import rs.ac.bg.etf.pp1.ast.ReadStmt;
@@ -75,13 +74,12 @@ public class CodeGenerator extends VisitorAdaptor {
 	private Stack<Integer> trueJumpFixupAddrStack = new Stack<Integer>();
 	private Stack<Integer> breakFixupAddrStack = new Stack<Integer>();
 	private int currentOp;
-	private boolean returnCoded;
+	private int currentIndex;
 	
 	public CodeGenerator() {
 		chrObj.setAdr(Code.pc);
 		ordObj.setAdr(Code.pc);
 		createOrdChrCode();
-		returnCoded = false;
 		lenObj.setAdr(Code.pc);
 		createLenCode();
 		incDec.setAdr(1);
@@ -107,11 +105,8 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 
 	private void returnFromFunction() {
-		if (!returnCoded) {
-			Code.put(Code.exit);
-			Code.put(Code.return_);
-			returnCoded = true;
-		}
+		Code.put(Code.exit);
+		Code.put(Code.return_);
 	}
 	
 	@Override
@@ -124,7 +119,6 @@ public class CodeGenerator extends VisitorAdaptor {
 		Code.put(Code.enter);
 		Code.put(currentMethod.getLevel());
 		Code.put(currentMethod.getLocalSymbols().size());
-		returnCoded = false;
 	}
 	
 	@Override
@@ -134,7 +128,9 @@ public class CodeGenerator extends VisitorAdaptor {
 	
 	@Override
 	public void visit(AssignopExpr assignopExpr) {
-		Code.store(lValue);
+		if (!(lValue.getType().getKind() == Struct.Array)) {
+			Code.store(lValue);
+		}
 	}
 	
 	@Override
@@ -209,12 +205,14 @@ public class CodeGenerator extends VisitorAdaptor {
 		fixupCodeAndCloseScopeStack();
 	}
 	
+	@Override
 	public void visit(ForFirstStatement forFirstStatement) {
 		forFirstStatement.integer = Code.pc;
 		createFixupAddrStack();
 		//forLoopTopAddr.push(Code.pc);
 	}
 	
+	@Override
 	public void visit(ForConditionalStatement forConditionalStatement) {
 		Code.putJump(0);
 		addFixupAddrToStack();
@@ -222,6 +220,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		//forLoopTopAddr.push(Code.pc);
 	}
 	
+	@Override
 	public void visit(ForSecondStatement forSecondStatement) {
 		ForFirstStatement forFirstStatement = ((ForLoop) forSecondStatement.getParent()).getForFirstStatement();
 		int fixupAddr = forFirstStatement.integer;
@@ -229,6 +228,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		Code.fixup(currentFixupAddrStack.pop());
 	}
 	
+	@Override
 	public void visit(ForCodeBlock forCodeBlock) {
 		ForConditionalStatement forConditionalStatement = ((ForLoop)forCodeBlock.getParent()).getForConditionalStatement();
 		int fixupAddr = forConditionalStatement.integer;
@@ -237,17 +237,19 @@ public class CodeGenerator extends VisitorAdaptor {
 		fixupBreakJumps();
 	}
 
+	@Override
 	public void visit(BreakStmt breakStmt) {
 		Code.putJump(0);
 		breakFixupAddrStack.push(Code.pc - 2);
 	}
 	
+	@Override
 	public void visit(ContinueStmt continueStmt) {
 		SyntaxNode forLoop = continueStmt.getParent();
 		while (!(forLoop instanceof ForLoop)) {
 			forLoop = forLoop.getParent();
 		}
-		int fixupAddr = ((ForConditionalStatement)((ForLoop) forLoop).getForConditionalStatement()).integer;
+		int fixupAddr = ((ForLoop) forLoop).getForConditionalStatement().integer;
 		Code.putJump(fixupAddr);
 	}
 	
@@ -320,9 +322,8 @@ public class CodeGenerator extends VisitorAdaptor {
 	@Override
 	public void visit(LValueDesignator lValueDesignator) {
 		lValue = lValueDesignator.obj;
-		boolean isArray = lValue.getKind() == Obj.Elem;
-		if (!isArray) {
-			//Code.load(lValue);
+		if (lValue.getType().getKind() == Struct.Array) {
+			currentIndex = 0;
 		}
 	}
 	
@@ -438,9 +439,41 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 
 	@Override
-	public void visit(FactNewObject factNewObject) {
+	public void visit(NewArrayEnd newArrayEnd) {
 		Code.put(Code.newarray);
 		Code.put(1);
+		Code.store(lValue);
+	}
+	
+	@Override
+	public void visit(InitStarted initStarted) {
+		loadArrayAndIndex();
+	}
+	
+	@Override
+	public void visit(InitExpr initExpr) {
+		if (lValue.getType().getElemType() == charType) {
+			Code.put(Code.bastore);
+		} else {
+			Code.put(Code.astore);
+		}
+		loadArrayAndIndex();
+	}
+	
+	@Override
+	public void visit(OptInit optInit) {
+		popLastArrayAndIndex();
+	}
+
+	private void popLastArrayAndIndex() {
+		Code.put(Code.pop);
+		Code.put(Code.pop);
+	}
+	
+	private void loadArrayAndIndex() {
+		Code.load(lValue);
+		Code.loadConst(currentIndex);
+		currentIndex++;
 	}
 
 	@Override

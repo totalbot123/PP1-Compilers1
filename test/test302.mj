@@ -39,7 +39,7 @@ int niz[];
 			if(i == 5) print(1); 
 			else print(-1);
 		
-		niz = new int[3];//{1, 2, sum(niz[1], niz[0]) + 1};
+		niz = new int[3]{1, 2, sum(niz[1], niz[0]) + 1};
 		if(niz[2] == 4) print(ord('A')); 
 		else print(ord('a'));
 		

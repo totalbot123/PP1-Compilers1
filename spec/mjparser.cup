@@ -129,7 +129,8 @@ nonterminal InterfaceDecl, InterfaceMethodDeclList, InterfaceMethodDecl;
 nonterminal VarList; 
 nonterminal ForKeyWord, ForSecondStatement, ForCodeBlock;
 nonterminal CondOR;
-nonterminal IfKeyWord, ElseKeyWord, ElseCodeBlock; 
+nonterminal IfKeyWord, ElseKeyWord, ElseCodeBlock;
+nonterminal OptionalInitialization, InitPars, InitStarted, InitParamList, InitExpr, NewArrayEnd;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, ConstType, EnumName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj LValueDesignator, Designator, DesignatorName, DesignatorAccessList;
@@ -474,10 +475,34 @@ Arguments ::= (Argumentss) LPAREN ActPars RPAREN
 NewObject ::= (NewObject) NEW Type:t ArraySpecifier
 ;
 
-ArraySpecifier ::= (ArraySpecifiers) LBRACKET Expr RBRACKET
+ArraySpecifier ::= (ArraySpecifiers) LBRACKET Expr NewArrayEnd OptionalInitialization
 				   |
 				   (NoArraySpecifiers) /* epsilon */
 				   ;
+				   
+NewArrayEnd ::= (NewArrayEnd) RBRACKET
+;
+			   
+OptionalInitialization ::= (OptInit) InitStarted InitPars RBRACE
+						   |
+						   (NoOptInit) /* epsilon */
+						   ;
+						   
+InitStarted ::= (InitStarted) LBRACE
+;
+						   
+InitPars ::= (InitializationPars) InitParamList 
+			 | 
+			 (NoInit) /* epsilon */ 
+			 ;
+			   
+InitParamList ::= (InitParamLists) InitParamList COMMA InitExpr
+				  |
+				  (InitParam) InitExpr
+				  ;
+				  
+InitExpr ::= (InitExpr) Expr
+;
 
 ExprDecl ::= (ExprDecl) LPAREN Expr:e RPAREN
 ;
