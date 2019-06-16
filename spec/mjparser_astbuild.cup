@@ -123,6 +123,7 @@ nonterminal ClassDecl ClassDecl;
 nonterminal Extends Extends;
 nonterminal ClassMethodList ClassMethodList;
 nonterminal Brackets Brackets;
+nonterminal BoolConst BoolConst;
 nonterminal Minus Minus;
 nonterminal MulopFactor MulopFactor;
 nonterminal AddopTerm AddopTerm;
@@ -170,7 +171,7 @@ nonterminal IfKeyWord IfKeyWord;
 nonterminal ElseKeyWord ElseKeyWord;
 nonterminal ElseCodeBlock ElseCodeBlock; 
 
-nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, ConstType, BoolConst, EnumName;
+nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, ConstType, EnumName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj LValueDesignator, Designator, DesignatorName, DesignatorAccessList;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodName, MethodDecl, MethodType; 
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, FirstTerm, Expr, Factor, FirstFactor, VarDeclList;

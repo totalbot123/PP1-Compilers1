@@ -2,6 +2,12 @@ program P
 	int c[];
 	int x, y;
 	char z;
+	
+	const int pet = 5;
+	
+	char nizch[];
+	int niz[];
+	
 	enum Broj {
 		NULA,
 		JEDAN,
@@ -14,19 +20,14 @@ program P
 	}
 	
 	void main()
-		int i, j;
+		int bodovi;
+		Broj nula, jedan;
 	{
-		for (i = 0; i > 0 && i < 3 || i == 0; i++) {
-			for (j = 0; j < 3; j++) {
-				if (j == 2) {
-					break;
-				} else {
-					continue;
-				}
-				print(i);
-			}
-			print('1');
-		}
+		niz = new int[2];
+		niz[1] = 1;
+		niz[0] = 0;
 		
+		print(len(niz));
+		//print(niz[1]);
 	}
 }

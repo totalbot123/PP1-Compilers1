@@ -10,6 +10,7 @@ import rs.ac.bg.etf.pp1.ast.AddTerm;
 import rs.ac.bg.etf.pp1.ast.Argumentss;
 import rs.ac.bg.etf.pp1.ast.AssignopExpr;
 import rs.ac.bg.etf.pp1.ast.Asterisk;
+import rs.ac.bg.etf.pp1.ast.BoolConst;
 import rs.ac.bg.etf.pp1.ast.BreakStmt;
 import rs.ac.bg.etf.pp1.ast.CondFact;
 import rs.ac.bg.etf.pp1.ast.CondOR;
@@ -26,6 +27,7 @@ import rs.ac.bg.etf.pp1.ast.ElseCodeBlock;
 import rs.ac.bg.etf.pp1.ast.ElseKeyWord;
 import rs.ac.bg.etf.pp1.ast.Equal;
 import rs.ac.bg.etf.pp1.ast.Expr;
+import rs.ac.bg.etf.pp1.ast.FactBoolConst;
 import rs.ac.bg.etf.pp1.ast.FactCharConst;
 import rs.ac.bg.etf.pp1.ast.FactDesignatorAccesor;
 import rs.ac.bg.etf.pp1.ast.FactNewObject;
@@ -36,6 +38,7 @@ import rs.ac.bg.etf.pp1.ast.ForFirstStatement;
 import rs.ac.bg.etf.pp1.ast.ForKeyWord;
 import rs.ac.bg.etf.pp1.ast.ForLoop;
 import rs.ac.bg.etf.pp1.ast.ForSecondStatement;
+import rs.ac.bg.etf.pp1.ast.FunctionExpr;
 import rs.ac.bg.etf.pp1.ast.Greater;
 import rs.ac.bg.etf.pp1.ast.GreaterEqual;
 import rs.ac.bg.etf.pp1.ast.IfKeyWord;
@@ -58,6 +61,7 @@ import rs.ac.bg.etf.pp1.ast.RelopExprs;
 import rs.ac.bg.etf.pp1.ast.ReturnStmt;
 import rs.ac.bg.etf.pp1.ast.Slash;
 import rs.ac.bg.etf.pp1.ast.SyntaxNode;
+import rs.ac.bg.etf.pp1.ast.TrueConst;
 import rs.ac.bg.etf.pp1.ast.VisitorAdaptor;
 import rs.etf.pp1.mj.runtime.Code;
 import rs.etf.pp1.symboltable.concepts.Obj;
@@ -74,12 +78,13 @@ public class CodeGenerator extends VisitorAdaptor {
 	private boolean returnCoded;
 	
 	public CodeGenerator() {
-		incDec.setAdr(1);
 		chrObj.setAdr(Code.pc);
 		ordObj.setAdr(Code.pc);
 		createOrdChrCode();
+		returnCoded = false;
 		lenObj.setAdr(Code.pc);
 		createLenCode();
+		incDec.setAdr(1);
 	}
 	
 	private void createOrdChrCode() {
@@ -115,6 +120,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		if (methodName.getName().equals("main")) {
 			Code.mainPc = Code.pc;
 		}
+		currentMethod.setAdr(Code.pc);
 		Code.put(Code.enter);
 		Code.put(currentMethod.getLevel());
 		Code.put(currentMethod.getLocalSymbols().size());
@@ -321,26 +327,29 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 	
 	@Override
-	public void visit(DecOp decOp) {
-		Obj lValueDesig = ((DesignatorStatement) decOp.getParent()).getLValueDesignator().obj;
-		if (isOperandElem(decOp)) {
-			Code.put(Code.dup2);
-			Code.load(lValueDesig);
-		}
-		Code.load(incDec);
-		Code.put(Code.sub);
-		Code.store(lValue);
+	public void visit(FunctionExpr FunctionExpr) {
+		callMethod(lValue);
 	}
 	
 	@Override
 	public void visit(IncOp incOp) {
-		//Obj lValueDesig = ((DesignatorStatement) incOp.getParent()).getLValueDesignator().obj;
 		if (isOperandElem(incOp)) {
 			Code.put(Code.dup2);
 		}
 		Code.load(lValue);
 		Code.load(incDec);
 		Code.put(Code.add);
+		Code.store(lValue);
+	}
+	
+	@Override
+	public void visit(DecOp decOp) {
+		if (isOperandElem(decOp)) {
+			Code.put(Code.dup2);
+		}
+		Code.load(lValue);
+		Code.load(incDec);
+		Code.put(Code.sub);
 		Code.store(lValue);
 	}
 	
@@ -391,6 +400,10 @@ public class CodeGenerator extends VisitorAdaptor {
 	@Override
 	public void visit(Argumentss argumentss) {
 		Obj methodObj = ((FactDesignatorAccesor) argumentss.getParent()).getDesignator().obj;
+		callMethod(methodObj);
+	}
+
+	private void callMethod(Obj methodObj) {
 		int dest_adr = methodObj.getAdr() - Code.pc;
 		Code.put(Code.call);
 		Code.put2(dest_adr);
@@ -407,6 +420,20 @@ public class CodeGenerator extends VisitorAdaptor {
 	public void visit(FactCharConst factCharConst) {
 		Obj obj = new Obj(Obj.Con, "", charType);
 		obj.setAdr(factCharConst.getC1());
+		Code.load(obj);
+	}
+	
+	@Override
+	public void visit(FactBoolConst factBoolConst) {
+		Obj obj;
+		BoolConst boolConst = factBoolConst.getBoolConst();
+		if (boolConst instanceof TrueConst) {
+			obj = new Obj(Obj.Con, "", boolType);
+			obj.setAdr(1);
+		} else {
+			obj = new Obj(Obj.Con, "", boolType);
+			obj.setAdr(0);
+		}
 		Code.load(obj);
 	}
 

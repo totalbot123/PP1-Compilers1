@@ -1,5 +1,7 @@
 package rs.ac.bg.etf.pp1;
 
+import static rs.ac.bg.etf.pp1.SemanticPass.boolType;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -45,7 +47,7 @@ public class MJParserTest {
 	        SyntaxNode prog = (SyntaxNode)(s.value);
 	        
 			Tab.init(); // Universe scope
-			Tab.currentScope().addToLocals(new Obj(Obj.Type, "bool", new Struct(Struct.Bool)));
+			Tab.currentScope().addToLocals(new Obj(Obj.Type, "bool", boolType));
 			Tab.currentScope().addToLocals(new Obj(Obj.Type, "enum", new Struct(Struct.Enum)));
 			Tab.currentScope().addToLocals(new Obj(Obj.Meth, "print", new Struct(Struct.None)));
 			Tab.currentScope().addToLocals(new Obj(Obj.Meth, "read", new Struct(Struct.None)));

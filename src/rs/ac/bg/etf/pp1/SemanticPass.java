@@ -224,23 +224,28 @@ public class SemanticPass extends VisitorAdaptor {
 	@Override
 	public void visit(BooleanType booleanType) {
 		Obj boolValue = new Obj(Obj.Con, "", boolType);
-		boolValue.setAdr(1);
-		booleanType.obj = booleanType.getBoolConst().obj;
+		//boolValue.setAdr(1);
+		if (booleanType.getBoolConst() instanceof TrueConst) {
+			boolValue.setAdr(1);
+		} else {
+			boolValue.setAdr(0);
+		}
+		booleanType.obj = boolValue;
 	}
 	
-	@Override
-	public void visit(TrueConst trueConst) {
-		Obj trueValue = new Obj(Obj.Con, "", boolType);
-		trueValue.setAdr(1);
-		trueConst.obj = trueValue;
-	}
-	
-	@Override
-	public void visit(FalseConst falseConst) {
-		Obj falseValue = new Obj(Obj.Con, "", boolType);
-		falseValue.setAdr(0);;
-		falseConst.obj = falseValue;
-	}
+//	@Override
+//	public void visit(TrueConst trueConst) {
+//		Obj trueValue = new Obj(Obj.Con, "", boolType);
+//		trueValue.setAdr(1);
+//		trueConst.obj = trueValue;
+//	}
+//	
+//	@Override
+//	public void visit(FalseConst falseConst) {
+//		Obj falseValue = new Obj(Obj.Con, "", boolType);
+//		falseValue.setAdr(0);
+//		falseConst.obj = falseValue;
+//	}
 	
 	
 	@Override
@@ -356,7 +361,13 @@ public class SemanticPass extends VisitorAdaptor {
 	
 	@Override
 	public void visit(FormalParamDecl formalParamDecl) {
-		Obj argNode = new Obj(Obj.Var, formalParamDecl.getId(), currentType);
+		Obj argNode;
+		if (!(formalParamDecl.getBrackets() instanceof NoBrackets)) {
+			argNode = new Obj(Obj.Var, formalParamDecl.getId(), new Struct(Struct.Array, currentType));
+		} else {
+			argNode = new Obj(Obj.Var, formalParamDecl.getId(), currentType);
+		}
+		
 		if (Tab.currentScope().addToLocals(argNode)) {
 			currentMethod.setLevel(currentMethod.getLevel() + 1);
 			argNode.setFpPos(currentMethod.getLevel());
@@ -466,7 +477,7 @@ public class SemanticPass extends VisitorAdaptor {
 	public void visit(FactDesignatorAccesor factDesignatorAccesor) {		
 		Obj obj = Tab.find(currentDesignator.getName());
 		if (accessedDesignator != noObj) {
-			if (enumContains(accessedDesignator, currentDesignator) || isMethod(currentDesignator)) {
+			if (enumContains(accessedDesignator, currentDesignator) || isMethod(accessedDesignator)) {
 				factDesignatorAccesor.struct = accessedDesignator.getType();
 			} else {
 				factDesignatorAccesor.struct = currentDesignator.getType();
@@ -498,7 +509,7 @@ public class SemanticPass extends VisitorAdaptor {
 	@Override
 	public void visit(Argumentss argumentss) {
 		Obj currentMethod = ((FactDesignatorAccesor)argumentss.getParent()).getDesignator().obj;
-		currentDesignator = currentMethod;
+		accessedDesignator = currentMethod;
 		if (currentMethod.getKind() != Obj.Meth) {
 			report_error(currentMethod.getName() + " ne predstavlja metod", argumentss);
 		} else {
