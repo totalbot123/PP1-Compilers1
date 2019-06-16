@@ -14,15 +14,19 @@ program P
 	}
 	
 	void main()
+		int i, j;
 	{
-		x = 0;
-		c = new int[3];
-		for (; x < 3; x++) {
-			for (y = 0; y < 3; y++) {
-				if (y == 2) {
-					print('x');
+		for (i = 0; i > 0 && i < 3 || i == 0; i++) {
+			for (j = 0; j < 3; j++) {
+				if (j == 2) {
+					break;
+				} else {
+					continue;
 				}
+				print(i);
 			}
+			print('1');
 		}
+		
 	}
 }

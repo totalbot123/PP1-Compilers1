@@ -126,12 +126,16 @@ nonterminal Relop, Mulop, Assignop;
 nonterminal EnumDecl, EnumList, Implements, TypeList;
 nonterminal InterfaceDecl, InterfaceMethodDeclList, InterfaceMethodDecl;
 nonterminal VarList; 
-nonterminal ForKeyWord, ForOptionalStatement, ForCodeBlock, CondOR, IfKeyWord, ElseKeyWord, ElseCodeBlock; 
+nonterminal ForKeyWord, ForSecondStatement, ForCodeBlock;
+nonterminal CondOR;
+nonterminal IfKeyWord, ElseKeyWord, ElseCodeBlock; 
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, ConstType, BoolConst, EnumName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj LValueDesignator, Designator, DesignatorName, DesignatorAccessList;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodName, MethodDecl, MethodType; 
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, FirstTerm, Expr, Factor, FirstFactor, VarDeclList;
+
+nonterminal java.lang.Integer ForFirstStatement, ForConditionalStatement;
 
 precedence left ELSE;
 
@@ -345,13 +349,13 @@ ElseKeyWord ::= (ElseKeyWord) ELSE
 ElseCodeBlock ::= (ElseCodeBlock) Statement
 ;
 
-Condition ::= CondTerm CondTermList
-;
-
 OptionalCondition ::= (OptCond) Condition
 					  |
 					  (NoOptCond) /* epsilon */
 					  ;
+
+Condition ::= (Condition) CondTerm CondTermList
+;
 
 CondTermList ::= (CondTermsList) CondTermList CondOR CondTerm
 				 |
@@ -377,13 +381,19 @@ RelopExpr ::= (RelopExprs) Relop Expr
 			  (NoRelopExprs) /* epsilon */
 			  ;
 			  
-ForLoop ::= ForKeyWord LPAREN ForOptionalStatement SEMI OptionalCondition SEMI OptionalDesignatorStatement RPAREN ForCodeBlock
-;
-
-ForOptionalStatement ::= (ForOptionalStatement) OptionalDesignatorStatement
+ForLoop ::= (ForLoop) ForKeyWord LPAREN ForFirstStatement SEMI ForConditionalStatement SEMI ForSecondStatement RPAREN ForCodeBlock
 ;
 
 ForKeyWord ::= (ForKeyWord) FOR
+;
+
+ForFirstStatement ::= (ForFirstStatement) OptionalDesignatorStatement
+;
+
+ForConditionalStatement ::= (ForConditionalStatement) OptionalCondition
+;
+
+ForSecondStatement ::= (ForSecondStatement) OptionalDesignatorStatement
 ;
 
 ForCodeBlock ::= (ForCodeBlock) Statement

@@ -3,14 +3,21 @@ package rs.ac.bg.etf.pp1;
 import static rs.ac.bg.etf.pp1.SemanticPass.*;
 import static rs.etf.pp1.symboltable.Tab.*;
 
+import java.util.Queue;
 import java.util.Stack;
 
 import rs.ac.bg.etf.pp1.ast.AddTerm;
 import rs.ac.bg.etf.pp1.ast.Argumentss;
 import rs.ac.bg.etf.pp1.ast.AssignopExpr;
 import rs.ac.bg.etf.pp1.ast.Asterisk;
+import rs.ac.bg.etf.pp1.ast.BreakStmt;
 import rs.ac.bg.etf.pp1.ast.CondFact;
 import rs.ac.bg.etf.pp1.ast.CondOR;
+import rs.ac.bg.etf.pp1.ast.CondTerm;
+import rs.ac.bg.etf.pp1.ast.CondTermList;
+import rs.ac.bg.etf.pp1.ast.CondTermsList;
+import rs.ac.bg.etf.pp1.ast.Condition;
+import rs.ac.bg.etf.pp1.ast.ContinueStmt;
 import rs.ac.bg.etf.pp1.ast.DecOp;
 import rs.ac.bg.etf.pp1.ast.Designator;
 import rs.ac.bg.etf.pp1.ast.DesignatorName;
@@ -24,8 +31,11 @@ import rs.ac.bg.etf.pp1.ast.FactDesignatorAccesor;
 import rs.ac.bg.etf.pp1.ast.FactNewObject;
 import rs.ac.bg.etf.pp1.ast.FactNumConst;
 import rs.ac.bg.etf.pp1.ast.ForCodeBlock;
+import rs.ac.bg.etf.pp1.ast.ForConditionalStatement;
+import rs.ac.bg.etf.pp1.ast.ForFirstStatement;
 import rs.ac.bg.etf.pp1.ast.ForKeyWord;
-import rs.ac.bg.etf.pp1.ast.ForOptionalStatement;
+import rs.ac.bg.etf.pp1.ast.ForLoop;
+import rs.ac.bg.etf.pp1.ast.ForSecondStatement;
 import rs.ac.bg.etf.pp1.ast.Greater;
 import rs.ac.bg.etf.pp1.ast.GreaterEqual;
 import rs.ac.bg.etf.pp1.ast.IfKeyWord;
@@ -58,7 +68,8 @@ public class CodeGenerator extends VisitorAdaptor {
 	private Obj incDec = new Obj(Obj.Con, "KonstantaJedan", intType);
 	private Stack<Stack<Integer> > stackOfFixupAddrStacks = new Stack<Stack<Integer>>();
 	private Stack<Integer> currentFixupAddrStack = null;
-	private Stack<Integer> forLoopTopAddr = new Stack<Integer>();
+	private Stack<Integer> trueJumpFixupAddrStack = new Stack<Integer>();
+	private Stack<Integer> breakFixupAddrStack = new Stack<Integer>();
 	private int currentOp;
 	private boolean returnCoded;
 	
@@ -124,6 +135,23 @@ public class CodeGenerator extends VisitorAdaptor {
 	public void visit(IfKeyWord ifKeyWord) {
 		createFixupAddrStack();
 	}
+	
+	@Override
+	public void visit(Condition Condition) {
+		while (!trueJumpFixupAddrStack.empty()) {
+			Code.fixup(trueJumpFixupAddrStack.pop());
+		}
+	}
+	
+	@Override
+	public void visit(CondTerm condTerm) {
+//		CondTermList condTermList = ((Condition) condTerm.getParent()).getCondTermList();
+//		if (condTermList instanceof CondTermsList) {
+//			System.out.println("Lol");
+//		}
+		Code.putJump(0);
+		trueJumpFixupAddrStack.push(Code.pc - 2);
+	}
 
 	@Override
 	public void visit(CondOR condOR) {
@@ -162,7 +190,7 @@ public class CodeGenerator extends VisitorAdaptor {
 	public void visit(ElseKeyWord goElseBranch) {
 		Code.putJump(0);
 		fixupCodeAndCloseScopeStack();
-		openScopeStackAndAddFixupCode(); 
+		openScopeStackAndAddFixupCodeAddr(); 
 	}
 	
 	@Override
@@ -175,29 +203,57 @@ public class CodeGenerator extends VisitorAdaptor {
 		fixupCodeAndCloseScopeStack();
 	}
 	
-	public void visit(ForOptionalStatement forOptionalStatement) {
+	public void visit(ForFirstStatement forFirstStatement) {
+		forFirstStatement.integer = Code.pc;
 		createFixupAddrStack();
-		forLoopTopAddr.push(Code.pc);
+		//forLoopTopAddr.push(Code.pc);
+	}
+	
+	public void visit(ForConditionalStatement forConditionalStatement) {
+		Code.putJump(0);
+		addFixupAddrToStack();
+		forConditionalStatement.integer = Code.pc;
+		//forLoopTopAddr.push(Code.pc);
+	}
+	
+	public void visit(ForSecondStatement forSecondStatement) {
+		ForFirstStatement forFirstStatement = ((ForLoop) forSecondStatement.getParent()).getForFirstStatement();
+		int fixupAddr = forFirstStatement.integer;
+		Code.putJump(fixupAddr);
+		Code.fixup(currentFixupAddrStack.pop());
 	}
 	
 	public void visit(ForCodeBlock forCodeBlock) {
-		Code.putJump(forLoopTopAddr.pop());
+		ForConditionalStatement forConditionalStatement = ((ForLoop)forCodeBlock.getParent()).getForConditionalStatement();
+		int fixupAddr = forConditionalStatement.integer;
+		Code.putJump(fixupAddr);
 		fixupCodeAndCloseScopeStack();
-	}
-	
-	private void openScopeStackAndAddFixupCode() {
-		createFixupAddrStack();
-		addFixupAddrToStack();
+		fixupBreakJumps();
 	}
 
-	private void fixupCodeAndCloseScopeStack() {
-		fixupPreviousCode();
-		removeCurrentFixupAddrStack();
+	public void visit(BreakStmt breakStmt) {
+		Code.putJump(0);
+		breakFixupAddrStack.push(Code.pc - 2);
 	}
 	
-	private void removeCurrentFixupAddrStack() {
-		stackOfFixupAddrStacks.pop();
-		currentFixupAddrStack = stackOfFixupAddrStacks.empty() ? null :stackOfFixupAddrStacks.peek();
+	public void visit(ContinueStmt continueStmt) {
+		SyntaxNode forLoop = continueStmt.getParent();
+		while (!(forLoop instanceof ForLoop)) {
+			forLoop = forLoop.getParent();
+		}
+		int fixupAddr = ((ForConditionalStatement)((ForLoop) forLoop).getForConditionalStatement()).integer;
+		Code.putJump(fixupAddr);
+	}
+	
+	private void fixupBreakJumps() {
+		while (!breakFixupAddrStack.empty()) {
+			Code.fixup(breakFixupAddrStack.pop());
+		}
+	}
+	
+	private void openScopeStackAndAddFixupCodeAddr() {
+		createFixupAddrStack();
+		addFixupAddrToStack();
 	}
 	
 	private void createFixupAddrStack() {
@@ -209,10 +265,20 @@ public class CodeGenerator extends VisitorAdaptor {
 		currentFixupAddrStack.push(Code.pc - 2);
 	}
 
+	private void fixupCodeAndCloseScopeStack() {
+		fixupPreviousCode();
+		removeCurrentFixupAddrStack();
+	}
+	
 	private void fixupPreviousCode() {
 		while (!currentFixupAddrStack.empty()) {
 			Code.fixup(currentFixupAddrStack.pop());
 		}
+	}
+	
+	private void removeCurrentFixupAddrStack() {
+		stackOfFixupAddrStacks.pop();
+		currentFixupAddrStack = stackOfFixupAddrStacks.empty() ? null :stackOfFixupAddrStacks.peek();
 	}
 	
 	@Override
