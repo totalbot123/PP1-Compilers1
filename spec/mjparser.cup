@@ -126,7 +126,7 @@ nonterminal Relop, Mulop, Assignop;
 nonterminal EnumDecl, EnumList, Implements, TypeList;
 nonterminal InterfaceDecl, InterfaceMethodDeclList, InterfaceMethodDecl;
 nonterminal VarList; 
-nonterminal ForKeyWord, CondOR, IfKeyWord, ElseKeyWord, ElseCodeBlock; 
+nonterminal ForKeyWord, ForOptionalStatement, ForCodeBlock, CondOR, IfKeyWord, ElseKeyWord, ElseCodeBlock; 
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, ConstType, BoolConst, EnumName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj LValueDesignator, Designator, DesignatorName, DesignatorAccessList;
@@ -377,10 +377,16 @@ RelopExpr ::= (RelopExprs) Relop Expr
 			  (NoRelopExprs) /* epsilon */
 			  ;
 			  
-ForLoop ::= ForKeyWord LPAREN OptionalDesignatorStatement SEMI OptionalCondition SEMI OptionalDesignatorStatement RPAREN Statement
+ForLoop ::= ForKeyWord LPAREN ForOptionalStatement SEMI OptionalCondition SEMI OptionalDesignatorStatement RPAREN ForCodeBlock
 ;
 
-ForKeyWord ::= FOR
+ForOptionalStatement ::= (ForOptionalStatement) OptionalDesignatorStatement
+;
+
+ForKeyWord ::= (ForKeyWord) FOR
+;
+
+ForCodeBlock ::= (ForCodeBlock) Statement
 ;
 
 NumConstList ::= (NumConstsList) NumConstList COMMA NUMBER

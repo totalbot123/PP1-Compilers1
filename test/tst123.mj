@@ -9,21 +9,20 @@ program P
 		DESET = 10
 	}
 {
+	int sum(int x, int y) {
+		return x + y;
+	}
 	
 	void main()
 	{
 		x = 0;
-		if (x > 1 && x < 10 || x == 4 || x == 6 || x) {
-			print('x');
-		} else {
-			if (x > 3 && x < 6 || x != 0) {
-				print('L');
-				print('O');
-				print('L');
-				print(' ');
+		c = new int[3];
+		for (; x < 3; x++) {
+			for (y = 0; y < 3; y++) {
+				if (y == 2) {
+					print('x');
+				}
 			}
-			print('k');
 		}
-		print('y');
 	}
 }

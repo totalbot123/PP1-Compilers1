@@ -66,7 +66,7 @@ public class MJParserTest {
 	        	CodeGenerator codeGenerator = new CodeGenerator();
 	        	prog.traverseBottomUp(codeGenerator);
 	        	
-	        	Code.dataSize = semanticCheck.nVars;
+	        	Code.dataSize = SemanticPass.nVars;
 	        	//Code.mainPc = codeGenerator.getMainPc();
 	        	Code.write(new FileOutputStream(objFile));
 	        	log.info("Parsiranje uspesno zavrseno!");

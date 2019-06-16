@@ -11,12 +11,10 @@ import rs.ac.bg.etf.pp1.ast.AssignopExpr;
 import rs.ac.bg.etf.pp1.ast.Asterisk;
 import rs.ac.bg.etf.pp1.ast.CondFact;
 import rs.ac.bg.etf.pp1.ast.CondOR;
-import rs.ac.bg.etf.pp1.ast.CondTerm;
 import rs.ac.bg.etf.pp1.ast.DecOp;
 import rs.ac.bg.etf.pp1.ast.Designator;
 import rs.ac.bg.etf.pp1.ast.DesignatorName;
 import rs.ac.bg.etf.pp1.ast.DesignatorStatement;
-import rs.ac.bg.etf.pp1.ast.ElseBranch;
 import rs.ac.bg.etf.pp1.ast.ElseCodeBlock;
 import rs.ac.bg.etf.pp1.ast.ElseKeyWord;
 import rs.ac.bg.etf.pp1.ast.Equal;
@@ -25,7 +23,9 @@ import rs.ac.bg.etf.pp1.ast.FactCharConst;
 import rs.ac.bg.etf.pp1.ast.FactDesignatorAccesor;
 import rs.ac.bg.etf.pp1.ast.FactNewObject;
 import rs.ac.bg.etf.pp1.ast.FactNumConst;
-import rs.ac.bg.etf.pp1.ast.GoElseBranch;
+import rs.ac.bg.etf.pp1.ast.ForCodeBlock;
+import rs.ac.bg.etf.pp1.ast.ForKeyWord;
+import rs.ac.bg.etf.pp1.ast.ForOptionalStatement;
 import rs.ac.bg.etf.pp1.ast.Greater;
 import rs.ac.bg.etf.pp1.ast.GreaterEqual;
 import rs.ac.bg.etf.pp1.ast.IfKeyWord;
@@ -58,7 +58,9 @@ public class CodeGenerator extends VisitorAdaptor {
 	private Obj incDec = new Obj(Obj.Con, "KonstantaJedan", intType);
 	private Stack<Stack<Integer> > stackOfFixupAddrStacks = new Stack<Stack<Integer>>();
 	private Stack<Integer> currentFixupAddrStack = null;
+	private Stack<Integer> forLoopTopAddr = new Stack<Integer>();
 	private int currentOp;
+	private boolean returnCoded;
 	
 	public CodeGenerator() {
 		incDec.setAdr(1);
@@ -89,8 +91,11 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 
 	private void returnFromFunction() {
-		Code.put(Code.exit);
-		Code.put(Code.return_);
+		if (!returnCoded) {
+			Code.put(Code.exit);
+			Code.put(Code.return_);
+			returnCoded = true;
+		}
 	}
 	
 	@Override
@@ -102,6 +107,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		Code.put(Code.enter);
 		Code.put(currentMethod.getLevel());
 		Code.put(currentMethod.getLocalSymbols().size());
+		returnCoded = false;
 	}
 	
 	@Override
@@ -114,6 +120,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		Code.store(lValue);
 	}
 	
+	@Override
 	public void visit(IfKeyWord ifKeyWord) {
 		createFixupAddrStack();
 	}
@@ -133,6 +140,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		addFixupAddrToStack();
 	}
 	
+	@Override
 	public void visit(RelopExprs relopExprs) {
 		Relop relop = relopExprs.getRelop();
 		if (relop instanceof Equal) {
@@ -150,17 +158,30 @@ public class CodeGenerator extends VisitorAdaptor {
 		} 
 	}
 	
+	@Override
 	public void visit(ElseKeyWord goElseBranch) {
 		Code.putJump(0);
 		fixupCodeAndCloseScopeStack();
 		openScopeStackAndAddFixupCode(); 
 	}
 	
+	@Override
 	public void visit(ElseCodeBlock elseCodeBlock) {
 		fixupCodeAndCloseScopeStack();
 	}
 	
+	@Override
 	public void visit(NoElseBranch noElseBranch) {
+		fixupCodeAndCloseScopeStack();
+	}
+	
+	public void visit(ForOptionalStatement forOptionalStatement) {
+		createFixupAddrStack();
+		forLoopTopAddr.push(Code.pc);
+	}
+	
+	public void visit(ForCodeBlock forCodeBlock) {
+		Code.putJump(forLoopTopAddr.pop());
 		fixupCodeAndCloseScopeStack();
 	}
 	
@@ -176,6 +197,7 @@ public class CodeGenerator extends VisitorAdaptor {
 	
 	private void removeCurrentFixupAddrStack() {
 		stackOfFixupAddrStacks.pop();
+		currentFixupAddrStack = stackOfFixupAddrStacks.empty() ? null :stackOfFixupAddrStacks.peek();
 	}
 	
 	private void createFixupAddrStack() {
@@ -228,7 +250,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		lValue = lValueDesignator.obj;
 		boolean isArray = lValue.getKind() == Obj.Elem;
 		if (!isArray) {
-			Code.load(lValue);
+			//Code.load(lValue);
 		}
 	}
 	
@@ -246,11 +268,11 @@ public class CodeGenerator extends VisitorAdaptor {
 	
 	@Override
 	public void visit(IncOp incOp) {
-		Obj lValueDesig = ((DesignatorStatement) incOp.getParent()).getLValueDesignator().obj;
+		//Obj lValueDesig = ((DesignatorStatement) incOp.getParent()).getLValueDesignator().obj;
 		if (isOperandElem(incOp)) {
 			Code.put(Code.dup2);
-			Code.load(lValueDesig);
 		}
+		Code.load(lValue);
 		Code.load(incDec);
 		Code.put(Code.add);
 		Code.store(lValue);
