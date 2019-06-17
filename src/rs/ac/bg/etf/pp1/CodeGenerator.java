@@ -330,9 +330,11 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 	
 	@Override
-	public void visit(FunctionExpr FunctionExpr) {
+	public void visit(FunctionExpr functionExpr) {
 		callMethod(lValue);
-		Code.put(Code.pop);
+		if (!(lValue.getType() == noType)) {
+			Code.put(Code.pop);
+		}
 	}
 	
 	@Override
@@ -405,9 +407,6 @@ public class CodeGenerator extends VisitorAdaptor {
 	public void visit(Argumentss argumentss) {
 		Obj methodObj = ((FactDesignatorAccesor) argumentss.getParent()).getDesignator().obj;
 		callMethod(methodObj);
-		if (methodObj.getType() == noType) {
-			Code.put(Code.pop);
-		}
 	}
 
 	private void callMethod(Obj methodObj) {
