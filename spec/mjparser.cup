@@ -496,7 +496,7 @@ InitPars ::= (InitializationPars) InitParamList
 			 (NoInit) /* epsilon */ 
 			 ;
 			   
-InitParamList ::= (InitParamLists) InitParamList COMMA InitExpr
+InitParamList ::= (InitParams) InitParamList COMMA InitExpr
 				  |
 				  (InitParam) InitExpr
 				  ;

@@ -541,7 +541,7 @@ InitPars ::= (InitializationPars) InitParamList:I1 {: RESULT=new InitializationP
 			 (NoInit) {: RESULT=new NoInit(); :} /* epsilon */ 
 			 ;
 			   
-InitParamList ::= (InitParamLists) InitParamList:I1 COMMA InitExpr:I2 {: RESULT=new InitParamLists(I1, I2); RESULT.setLine(I1left); :}
+InitParamList ::= (InitParams) InitParamList:I1 COMMA InitExpr:I2 {: RESULT=new InitParams(I1, I2); RESULT.setLine(I1left); :}
 				  |
 				  (InitParam) InitExpr:I1 {: RESULT=new InitParam(I1); RESULT.setLine(I1left); :}
 				  ;

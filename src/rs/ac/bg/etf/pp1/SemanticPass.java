@@ -45,6 +45,9 @@ import rs.ac.bg.etf.pp1.ast.ForStmt;
 import rs.ac.bg.etf.pp1.ast.FormalParamDecl;
 import rs.ac.bg.etf.pp1.ast.FunctionExpr;
 import rs.ac.bg.etf.pp1.ast.IncOp;
+import rs.ac.bg.etf.pp1.ast.InitParam;
+import rs.ac.bg.etf.pp1.ast.InitParams;
+import rs.ac.bg.etf.pp1.ast.InitializationPars;
 import rs.ac.bg.etf.pp1.ast.LValueDesignator;
 import rs.ac.bg.etf.pp1.ast.MethodDecl;
 import rs.ac.bg.etf.pp1.ast.MethodName;
@@ -635,6 +638,23 @@ public class SemanticPass extends VisitorAdaptor {
 			}
 		}
 		return "";
+	}
+	
+	@Override
+	public void visit(InitializationPars initializationPars) {
+		SyntaxNode current = initializationPars.getInitParamList();
+		Struct exprType;
+		while (current instanceof InitParams) {
+			exprType = ((InitParams) current).getInitExpr().getExpr().struct;
+			if (!assignableTo(currentType, exprType)) {
+				report_error("Nesipravan tip izraza u inicijalizaciji niza", initializationPars);
+			}
+			current = ((InitParams) current).getInitParamList();
+		}
+		exprType = ((InitParam) current).getInitExpr().getExpr().struct;
+		if (!assignableTo(currentType, exprType)) {
+			report_error("Nesipravan tip izraza u inicijalizaciji niza", initializationPars);
+		}
 	}
 
 	@Override
