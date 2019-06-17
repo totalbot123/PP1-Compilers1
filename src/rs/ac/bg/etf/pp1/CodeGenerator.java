@@ -61,8 +61,10 @@ import rs.ac.bg.etf.pp1.ast.ReturnStmt;
 import rs.ac.bg.etf.pp1.ast.Slash;
 import rs.ac.bg.etf.pp1.ast.SyntaxNode;
 import rs.ac.bg.etf.pp1.ast.TrueConst;
+import rs.ac.bg.etf.pp1.ast.Type;
 import rs.ac.bg.etf.pp1.ast.VisitorAdaptor;
 import rs.etf.pp1.mj.runtime.Code;
+import rs.etf.pp1.symboltable.Tab;
 import rs.etf.pp1.symboltable.concepts.Obj;
 import rs.etf.pp1.symboltable.concepts.Struct;
 
@@ -330,6 +332,7 @@ public class CodeGenerator extends VisitorAdaptor {
 	@Override
 	public void visit(FunctionExpr FunctionExpr) {
 		callMethod(lValue);
+		Code.put(Code.pop);
 	}
 	
 	@Override
@@ -402,6 +405,9 @@ public class CodeGenerator extends VisitorAdaptor {
 	public void visit(Argumentss argumentss) {
 		Obj methodObj = ((FactDesignatorAccesor) argumentss.getParent()).getDesignator().obj;
 		callMethod(methodObj);
+		if (methodObj.getType() == noType) {
+			Code.put(Code.pop);
+		}
 	}
 
 	private void callMethod(Obj methodObj) {
@@ -441,7 +447,11 @@ public class CodeGenerator extends VisitorAdaptor {
 	@Override
 	public void visit(NewArrayEnd newArrayEnd) {
 		Code.put(Code.newarray);
-		Code.put(1);
+		if (currentType.compatibleWith(charType)) {
+			Code.put(0);
+		} else {
+			Code.put(1);
+		}
 		Code.store(lValue);
 	}
 	
@@ -481,5 +491,10 @@ public class CodeGenerator extends VisitorAdaptor {
 		if (((Designator) designatorName.getParent()).obj.getKind() == Obj.Elem) {
 			Code.load(designatorName.obj);
 		}
+	}
+	
+	public void visit(Type type) {
+		Obj typeNode = Tab.find(type.getTypeName());
+		currentType = typeNode.getType();
 	}
 }

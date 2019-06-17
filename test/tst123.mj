@@ -3,7 +3,7 @@ program P
 	int x, y;
 	char z;
 	
-	const int pet = 5;
+	const bool tru = true;
 	
 	char nizch[];
 	int niz[];
@@ -23,15 +23,8 @@ program P
 		int bodovi;
 		Broj nula, jedan;
 	{
-		nizch = new char[3] {'a', 'b', 'c'};
-		//for (x = 0; x < len(niz); x++) {
-		//	niz[x] = 1;
-		//}
-		
-		print(2);
-		
-		for (x = 0; x < len(nizch); x++) {
-			print(nizch[x]);
+		if (tru == true) {
+			print('x');
 		}
 	}
 }
