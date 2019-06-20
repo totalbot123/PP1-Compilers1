@@ -564,7 +564,6 @@ public class SemanticPass extends VisitorAdaptor {
 				lValue = objNode;
 			}
 		}
-		
 	}
 	
 	@Override
