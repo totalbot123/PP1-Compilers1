@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.Stack;
 import org.apache.log4j.Logger;
 
+import jdk.nashorn.internal.runtime.regexp.joni.Syntax;
 import rs.ac.bg.etf.pp1.ast.ActualParam;
 import rs.ac.bg.etf.pp1.ast.ActualParams;
 import rs.ac.bg.etf.pp1.ast.Actuals;
@@ -425,10 +426,14 @@ public class SemanticPass extends VisitorAdaptor {
 	@Override
 	public void visit(AddTerm addTerm) {
 		Struct termNode = addTerm.getTerm().struct;
-//		if (termNode.getKind() != Struct.Int && termNode.getKind() != Struct.Enum) {
-//			report_error("Sabiranje se moze vrsiti samo sa integer-ima!", addTerm.getTerm());
-//		}
-		if (!assignableTo(previousTerm, termNode) && !assignableTo(termNode, previousTerm)) {
+		if (previousTerm.getKind() == Struct.Enum) {
+			SyntaxNode parent = addTerm.getParent();
+			if (parent instanceof Expr) {
+				((Expr)parent).getFirstTerm().struct = intType;
+			}
+			previousTerm = intType;
+		}
+		if (!assignableTo(previousTerm, termNode)) {
 			report_error("Operandi moraju biti istog tipa za operaciju sabiranja/oduzimanja", addTerm);
 		}
 		previousTerm = termNode;
@@ -457,10 +462,42 @@ public class SemanticPass extends VisitorAdaptor {
 //		if (!assignableTo(intType, mulopFactNode)) {
 //			report_error("Mnozenje se moze vrsiti samo sa integer-ima", mulopFactor);
 //		}
-		if (!assignableTo(previousFactor, mulopFactNode) && !assignableTo(mulopFactNode, previousFactor)) {
+//		if (previousFactor.getKind() == Struct.Enum) {
+//			previousFactor = intType;
+//		}
+		// && !assignableTo(mulopFactNode, previousFactor)
+//		if (!checkOperandTypes(previousFactor, mulopFactNode)) {
+//			report_error("Mnozenje se ne moze sa tipom koji nije int", mulopFactor);
+//		} else {
+//			mulopFactNode
+//		}
+		if (previousFactor.getKind() == Struct.Enum) {
+			SyntaxNode parent = mulopFactor.getParent();
+			if (parent instanceof Term) {
+				((Term)parent).getFirstFactor().struct = intType;
+			}
+			previousTerm = intType;
+		}
+		if (!assignableTo(previousFactor, mulopFactNode)) {
 			report_error("Operandi moraju biti istog tipa za operaciju mnozenja/deljenja/mod-a", mulopFactor);
 		}
 		previousFactor = mulopFactNode;
+	}
+	
+	public boolean checkOperandTypes(Struct first, Struct second) {
+		first = castEnumToInt(first);
+		second = castEnumToInt(second);
+		if (first != intType || second != intType) {
+			return false;
+		}
+		return true;
+	}
+
+	private Struct castEnumToInt(Struct operand) {
+		if (operand.getKind() == Struct.Enum) {
+			return intType;
+		}
+		return operand;
 	}
 	
 	@Override
