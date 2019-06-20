@@ -411,31 +411,22 @@ OptionalExpr ::= (Expression) Expr
 			   	 (NoExpression) /* epsilon */
 			   	 ;
 
-Expr ::= (Expr) Minus FirstTerm:first AddopTerm
+Expr ::= (Expr) Minus AddopTerm
 ;
-
-FirstTerm ::= (FirstTerm) Term:t
-;
-
-Minus ::= (MinusSign) MINUS
-		  |
-		  (NoMinusSign) /* epsilon */
-		  ;
 			  
 AddopTerm ::= (AddTerm) AddopTerm Addop Term:t
 		     |
-		     (NoAddTerm) /* epsilon */
+		     (SingleTerm) Term
+		     |
+		     (MinusTerm) MINUS Term
 		     ;
 
-Term ::= (Term) FirstFactor:f MulopFactor
-;
-
-FirstFactor ::= (FirstFactor) Factor:f
+Term ::= (Term) MulopFactor
 ;
 
 MulopFactor ::= (MulopFactors) MulopFactor Mulop Factor
 				|
-				(NoMulopFactors) /* epsilon */
+				(SingleFactor) Factor
 				;
 
 Factor ::= (FactDesignatorAccesor) Designator Arguments:args
