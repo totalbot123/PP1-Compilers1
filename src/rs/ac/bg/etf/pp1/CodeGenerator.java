@@ -45,7 +45,7 @@ import rs.ac.bg.etf.pp1.ast.Less;
 import rs.ac.bg.etf.pp1.ast.LessEqual;
 import rs.ac.bg.etf.pp1.ast.MethodDecl;
 import rs.ac.bg.etf.pp1.ast.MethodName;
-import rs.ac.bg.etf.pp1.ast.MinusSign;
+import rs.ac.bg.etf.pp1.ast.MinusTerm;
 import rs.ac.bg.etf.pp1.ast.MulopFactors;
 import rs.ac.bg.etf.pp1.ast.NewArrayEnd;
 import rs.ac.bg.etf.pp1.ast.NoElseBranch;
@@ -366,11 +366,8 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 	
 	@Override
-	public void visit(Expr expr) {
-		boolean minusUsed = expr.getMinus() instanceof MinusSign;
-		if (minusUsed) {
-			Code.put(Code.neg);
-		}
+	public void visit(MinusTerm minusTerm) {
+		Code.put(Code.neg);
 	}
 
 	@Override

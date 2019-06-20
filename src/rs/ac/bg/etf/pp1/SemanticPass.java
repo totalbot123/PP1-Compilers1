@@ -11,7 +11,6 @@ import java.util.Optional;
 import java.util.Stack;
 import org.apache.log4j.Logger;
 
-import jdk.nashorn.internal.runtime.regexp.joni.Syntax;
 import rs.ac.bg.etf.pp1.ast.ActualParam;
 import rs.ac.bg.etf.pp1.ast.ActualParams;
 import rs.ac.bg.etf.pp1.ast.Actuals;
@@ -39,8 +38,6 @@ import rs.ac.bg.etf.pp1.ast.FactExprDecl;
 import rs.ac.bg.etf.pp1.ast.FactDesignatorAccesor;
 import rs.ac.bg.etf.pp1.ast.FactNewObject;
 import rs.ac.bg.etf.pp1.ast.FactNumConst;
-import rs.ac.bg.etf.pp1.ast.FirstFactor;
-import rs.ac.bg.etf.pp1.ast.FirstTerm;
 import rs.ac.bg.etf.pp1.ast.ForKeyWord;
 import rs.ac.bg.etf.pp1.ast.ForStmt;
 import rs.ac.bg.etf.pp1.ast.FormalParamDecl;
@@ -52,10 +49,10 @@ import rs.ac.bg.etf.pp1.ast.InitializationPars;
 import rs.ac.bg.etf.pp1.ast.LValueDesignator;
 import rs.ac.bg.etf.pp1.ast.MethodDecl;
 import rs.ac.bg.etf.pp1.ast.MethodName;
+import rs.ac.bg.etf.pp1.ast.MinusTerm;
 import rs.ac.bg.etf.pp1.ast.MulopFactors;
 import rs.ac.bg.etf.pp1.ast.NoBrackets;
 import rs.ac.bg.etf.pp1.ast.NoExpression;
-import rs.ac.bg.etf.pp1.ast.NoMinusSign;
 import rs.ac.bg.etf.pp1.ast.NumberType;
 import rs.ac.bg.etf.pp1.ast.PrintStmt;
 import rs.ac.bg.etf.pp1.ast.ProgName;
@@ -64,6 +61,8 @@ import rs.ac.bg.etf.pp1.ast.ReadStmt;
 import rs.ac.bg.etf.pp1.ast.ReturnStmt;
 import rs.ac.bg.etf.pp1.ast.SingleConst;
 import rs.ac.bg.etf.pp1.ast.SingleEnumValue;
+import rs.ac.bg.etf.pp1.ast.SingleFactor;
+import rs.ac.bg.etf.pp1.ast.SingleTerm;
 import rs.ac.bg.etf.pp1.ast.SingleVar;
 import rs.ac.bg.etf.pp1.ast.SyntaxNode;
 import rs.ac.bg.etf.pp1.ast.Term;
@@ -400,91 +399,53 @@ public class SemanticPass extends VisitorAdaptor {
 
 	@Override
 	public void visit(Expr expr) {
-		if (expr.getAddopTerm() instanceof AddTerm) {
-			Struct firstTermStruct = expr.getFirstTerm().struct;
-			if (!firstTermStruct.compatibleWith(intType)) {
-				report_error("Sabiranje se moze vrsiti samo sa integer-ima!", expr.getFirstTerm());
-			}
-		}
-		expr.struct = expr.getFirstTerm().struct;
-		currentType = expr.struct;
-		report_info("Izracunavanje izraza", expr.getFirstTerm());
-	}
-
-	@Override
-	public void visit(FirstTerm firstTerm) {
-		Struct termNode = firstTerm.getTerm().struct;
-		boolean minusUsed = !(((Expr) firstTerm.getParent()).getMinus() instanceof NoMinusSign);
-		if (!termNode.compatibleWith(intType) && minusUsed) {
-			report_error("Neodgovarajuci tip izraza uz znak minus!", firstTerm);
-		}
-
-		firstTerm.struct = termNode;
-		previousTerm = firstTerm.struct;
+		expr.struct = expr.getAddopTerm().struct;
 	}
 
 	@Override
 	public void visit(AddTerm addTerm) {
-		Struct termNode = addTerm.getTerm().struct;
-		if (previousTerm.getKind() == Struct.Enum) {
-			SyntaxNode parent = addTerm.getParent();
-			if (parent instanceof Expr) {
-				((Expr)parent).getFirstTerm().struct = intType;
-			}
-			previousTerm = intType;
+		if (!checkOperandTypes(addTerm.getAddopTerm().struct, addTerm.getTerm().struct)) {
+			report_error("Operandi za sabranje/oduzimanje moraju biti int tipa", addTerm);
+		} else {
+			addTerm.struct = intType;
 		}
-		if (!assignableTo(previousTerm, termNode)) {
-			report_error("Operandi moraju biti istog tipa za operaciju sabiranja/oduzimanja", addTerm);
+	}
+	
+	@Override
+	public void visit(SingleTerm singleTerm) {
+		singleTerm.struct = singleTerm.getTerm().struct;
+	}
+	
+	@Override
+	public void visit(MinusTerm minusTerm) {
+		Struct minusTermType = minusTerm.getTerm().struct;
+		minusTermType = castEnumToInt(minusTermType);
+		if (!intType.compatibleWith(minusTermType)) {
+			report_error("Operandi uz operaciju minus mora biti int tipa", minusTerm);
 		}
-		previousTerm = termNode;
+		minusTerm.struct = minusTermType;
 	}
 	
 	@Override
 	public void visit(Term term) {
-		if (term.getMulopFactor() instanceof MulopFactors) {
-			Struct firstFactorStruct = term.getFirstFactor().struct;
-			if (!assignableTo(intType, firstFactorStruct)) {
-				report_error("Mnozenje se moze vrsiti samo sa integer-ima", term.getFirstFactor());
-			}
-		} 
-		term.struct = term.getFirstFactor().struct;
+		term.struct = term.getMulopFactor().struct;
 	}
 	
 	@Override
-	public void visit(FirstFactor firstFactor) {
-		firstFactor.struct = firstFactor.getFactor().struct;
-		previousFactor = firstFactor.struct;
+	public void visit(MulopFactors mulopFactors) {
+		if (!checkOperandTypes(mulopFactors.getMulopFactor().struct, mulopFactors.getFactor().struct)) {
+			report_error("Operandi uz operaciju mnozenja, deljenja ili mod-a mora biti int tipa", mulopFactors);
+		} else {
+			mulopFactors.struct = intType;
+		}
 	}
 	
 	@Override
-	public void visit(MulopFactors mulopFactor) {
-		Struct mulopFactNode = mulopFactor.getFactor().struct;
-//		if (!assignableTo(intType, mulopFactNode)) {
-//			report_error("Mnozenje se moze vrsiti samo sa integer-ima", mulopFactor);
-//		}
-//		if (previousFactor.getKind() == Struct.Enum) {
-//			previousFactor = intType;
-//		}
-		// && !assignableTo(mulopFactNode, previousFactor)
-//		if (!checkOperandTypes(previousFactor, mulopFactNode)) {
-//			report_error("Mnozenje se ne moze sa tipom koji nije int", mulopFactor);
-//		} else {
-//			mulopFactNode
-//		}
-		if (previousFactor.getKind() == Struct.Enum) {
-			SyntaxNode parent = mulopFactor.getParent();
-			if (parent instanceof Term) {
-				((Term)parent).getFirstFactor().struct = intType;
-			}
-			previousTerm = intType;
-		}
-		if (!assignableTo(previousFactor, mulopFactNode)) {
-			report_error("Operandi moraju biti istog tipa za operaciju mnozenja/deljenja/mod-a", mulopFactor);
-		}
-		previousFactor = mulopFactNode;
+	public void visit(SingleFactor singleFactor) {
+		singleFactor.struct = singleFactor.getFactor().struct;
 	}
 	
-	public boolean checkOperandTypes(Struct first, Struct second) {
+	private boolean checkOperandTypes(Struct first, Struct second) {
 		first = castEnumToInt(first);
 		second = castEnumToInt(second);
 		if (first != intType || second != intType) {

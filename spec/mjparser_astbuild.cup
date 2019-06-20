@@ -124,9 +124,6 @@ nonterminal Extends Extends;
 nonterminal ClassMethodList ClassMethodList;
 nonterminal Brackets Brackets;
 nonterminal BoolConst BoolConst;
-nonterminal Minus Minus;
-nonterminal MulopFactor MulopFactor;
-nonterminal AddopTerm AddopTerm;
 nonterminal ExprDecl ExprDecl;
 nonterminal ArraySpecifier ArraySpecifier;
 nonterminal NewObject NewObject;
@@ -180,7 +177,8 @@ nonterminal NewArrayEnd NewArrayEnd;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj Program, ProgName, ConstType, EnumName;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj LValueDesignator, Designator, DesignatorName, DesignatorAccessList;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodName, MethodDecl, MethodType; 
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, FirstTerm, Expr, Factor, FirstFactor, VarDeclList;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct MulopFactor, AddopTerm;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Term, Expr, Factor, VarDeclList;
 
 nonterminal java.lang.Integer ForFirstStatement, ForConditionalStatement;
 
@@ -456,31 +454,22 @@ OptionalExpr ::= (Expression) Expr:E1 {: RESULT=new Expression(E1); RESULT.setLi
 			   	 (NoExpression) {: RESULT=new NoExpression(); :} /* epsilon */
 			   	 ;
 
-Expr ::= (Expr) Minus:M1 FirstTerm:first AddopTerm:A2 {: RESULT=new Expr(M1, first, A2); RESULT.setLine(M1left); :}
+Expr ::= (Expr) AddopTerm:A1 {: RESULT=new Expr(A1); RESULT.setLine(A1left); :}
 ;
-
-FirstTerm ::= (FirstTerm) Term:t {: RESULT=new FirstTerm(t); RESULT.setLine(tleft); :}
-;
-
-Minus ::= (MinusSign) MINUS {: RESULT=new MinusSign(); :}
-		  |
-		  (NoMinusSign) {: RESULT=new NoMinusSign(); :} /* epsilon */
-		  ;
 			  
 AddopTerm ::= (AddTerm) AddopTerm:A1 Addop:A2 Term:t {: RESULT=new AddTerm(A1, A2, t); RESULT.setLine(A1left); :}
 		     |
-		     (NoAddTerm) {: RESULT=new NoAddTerm(); :} /* epsilon */
+		     (SingleTerm) Term:T1 {: RESULT=new SingleTerm(T1); RESULT.setLine(T1left); :}
+		     |
+		     (MinusTerm) MINUS Term:T1 {: RESULT=new MinusTerm(T1); RESULT.setLine(T1left); :}
 		     ;
 
-Term ::= (Term) FirstFactor:f MulopFactor:M1 {: RESULT=new Term(f, M1); RESULT.setLine(fleft); :}
-;
-
-FirstFactor ::= (FirstFactor) Factor:f {: RESULT=new FirstFactor(f); RESULT.setLine(fleft); :}
+Term ::= (Term) MulopFactor:M1 {: RESULT=new Term(M1); RESULT.setLine(M1left); :}
 ;
 
 MulopFactor ::= (MulopFactors) MulopFactor:M1 Mulop:M2 Factor:F3 {: RESULT=new MulopFactors(M1, M2, F3); RESULT.setLine(M1left); :}
 				|
-				(NoMulopFactors) {: RESULT=new NoMulopFactors(); :} /* epsilon */
+				(SingleFactor) Factor:F1 {: RESULT=new SingleFactor(F1); RESULT.setLine(F1left); :}
 				;
 
 Factor ::= (FactDesignatorAccesor) Designator:D1 Arguments:args {: RESULT=new FactDesignatorAccesor(D1, args); RESULT.setLine(D1left); :}
