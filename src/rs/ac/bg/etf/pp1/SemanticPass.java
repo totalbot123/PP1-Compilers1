@@ -25,6 +25,7 @@ import rs.ac.bg.etf.pp1.ast.CharacterType;
 import rs.ac.bg.etf.pp1.ast.ContinueStmt;
 import rs.ac.bg.etf.pp1.ast.DecOp;
 import rs.ac.bg.etf.pp1.ast.Designator;
+import rs.ac.bg.etf.pp1.ast.DesignatorAccessList;
 import rs.ac.bg.etf.pp1.ast.DesignatorElementAccess;
 import rs.ac.bg.etf.pp1.ast.DesignatorFieldAccess;
 import rs.ac.bg.etf.pp1.ast.DesignatorName;
@@ -52,6 +53,7 @@ import rs.ac.bg.etf.pp1.ast.MethodName;
 import rs.ac.bg.etf.pp1.ast.MinusTerm;
 import rs.ac.bg.etf.pp1.ast.MulopFactors;
 import rs.ac.bg.etf.pp1.ast.NoBrackets;
+import rs.ac.bg.etf.pp1.ast.NoDesignatorsList;
 import rs.ac.bg.etf.pp1.ast.NoExpression;
 import rs.ac.bg.etf.pp1.ast.NumberType;
 import rs.ac.bg.etf.pp1.ast.PrintStmt;
@@ -557,6 +559,10 @@ public class SemanticPass extends VisitorAdaptor {
 		if (objNode.equals(noObj)) {
 			report_error("" + designatorName.getName() + " nije deklarisan", designatorName);
 		} else {
+			DesignatorAccessList rightNode = ((Designator)designatorName.getParent()).getDesignatorAccessList();
+			if (rightNode instanceof NoDesignatorsList && objNode.getKind() == Obj.Type) {
+				report_error("Dodeljivanje tipa ili dodeljivanje tipu nije moguce!", designatorName);
+			}
 			designatorName.obj = objNode;
 			currentDesignator = objNode;
 			
@@ -602,7 +608,6 @@ public class SemanticPass extends VisitorAdaptor {
 		if (lValue.getKind() != Obj.Var && lValue.getKind() != Obj.Elem) {
 			report_error("Nemoguce dodavalje konstanti", assignopExpr);
 		}
-		
 		Struct lValueType = lValue.getType();
 		Struct assignedExprType = assignopExpr.getExpr().struct;
 		if (!assignableTo(lValueType, assignedExprType)) {
@@ -707,7 +712,8 @@ public class SemanticPass extends VisitorAdaptor {
 	
 	@Override
 	public void visit(PrintStmt printStmt) {
-		Struct exprType = printStmt.getExpr().struct;	
+		Struct exprType = printStmt.getExpr().struct;
+		exprType = castEnumToInt(exprType);
 		boolean isBasicType = isBasicType(exprType);
 		if (!isBasicType) {
 			report_error("Neodgovarajuci tip izraza uz operaciju print", printStmt.getExpr());
